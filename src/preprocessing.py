@@ -264,6 +264,11 @@ def load_dataset(file_path: Path) -> List[str]:
 def prepare_dataset(file_path: Path) -> Tuple[List[str], List[List[int]]]:
     """
     Load and prepare dataset for training.
+    Complete preprocessing pipeline:
+    1. Load sentences from file
+    2. Clean Arabic text (normalize, remove non-Arabic chars)
+    3. Extract diacritic labels (before cleaning removes them)
+    4. Return clean texts and their corresponding label sequences
     
     Args:
         file_path: Path to dataset file
@@ -277,7 +282,21 @@ def prepare_dataset(file_path: Path) -> Tuple[List[str], List[List[int]]]:
     label_sequences = []
     
     for sentence in sentences:
-        clean_text, labels = extract_labels_simple(sentence)
+        # Step 1: Clean the Arabic text (normalize, remove non-Arabic)
+        # This preserves diacritics while cleaning everything else
+        cleaned_sentence = clean_arabic_text(sentence)
+        
+        # Skip empty sentences after cleaning
+        if not cleaned_sentence:
+            continue
+        
+        # Step 2: Extract labels from the cleaned diacritized text
+        clean_text, labels = extract_labels_simple(cleaned_sentence)
+        
+        # Skip if no content after label extraction
+        if not clean_text:
+            continue
+        
         clean_texts.append(clean_text)
         label_sequences.append(labels)
     
