@@ -84,7 +84,8 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 
 #### Task 1.3: Diacritic Extraction & Label Creation ⏱️ 8 hours
 
-- [ ] Implement `extract_labels_simple()` - extract diacritics as labels
+- [ ] Review diacritic mappings from `utils/diacritics.pickle` and `utils/diacritic2id.pickle`
+- [ ] Implement `extract_labels_simple()` - extract diacritics as labels using pickle mappings
 - [ ] Implement `strip_diacritics()` - remove all diacritics
 - [ ] Handle multiple diacritics per character (Shadda combinations)
 - [ ] Create character-to-diacritic alignment logic
@@ -265,22 +266,25 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 
 ---
 
-#### Task 2.2: Word Embeddings Integration ⏱️ 8 hours
+#### Task 2.2: Utilize Existing Resources & Setup Embeddings ⏱️ 8 hours
 
-- [ ] Research Arabic word embeddings (FastText, AraVec, Word2Vec)
-- [ ] Download or train Arabic embeddings
-- [ ] Implement `EmbeddingLoader` class
-- [ ] Create character-level embeddings (if needed)
-- [ ] Load and test pre-trained embeddings
-- [ ] Handle out-of-vocabulary words
-- [ ] Measure embedding quality (similarity tests)
-- [ ] Document embedding choice and preprocessing
+- [ ] Load existing resources from `utils/` folder:
+  - [ ] Load `arabic_letters.pickle` - character mappings
+  - [ ] Load `diacritic2id.pickle` - diacritic ID mappings
+  - [ ] Load `diacritics.pickle` - diacritic definitions
+- [ ] Integrate these resources into `src/config.py`
+- [ ] Update `DIACRITIC_TO_ID` to use loaded mappings
+- [ ] Update `ARABIC_DIACRITICS` to use loaded diacritics
+- [ ] Create utility functions to load pickle files
+- [ ] (Optional) Download Arabic pre-trained embeddings (FastText/AraVec) if needed for comparison
+- [ ] Test resource loading and integration
+- [ ] Document resource usage
 
 **Deliverables:**
 
-- Embedding loader module
-- Pre-trained embeddings integrated
-- Embedding evaluation report
+- Resource loader utilities
+- Updated config with pickle file integration
+- Resource documentation
 
 ---
 

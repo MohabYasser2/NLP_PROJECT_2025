@@ -4,12 +4,31 @@ Auto-detects Kaggle vs Local environment and sets paths accordingly.
 """
 
 import os
+import pickle
 from pathlib import Path
 
 
 def is_kaggle_environment():
     """Detect if running on Kaggle."""
     return os.path.exists('/kaggle/input')
+
+
+def load_pickle_resource(filename):
+    """
+    Load a pickle resource from the utils/ directory.
+    
+    Args:
+        filename: Name of the pickle file (e.g., 'diacritics.pickle')
+    
+    Returns:
+        Loaded object from pickle file
+    """
+    resource_path = Path(__file__).parent.parent / 'utils' / filename
+    if not resource_path.exists():
+        raise FileNotFoundError(f"Resource file not found: {resource_path}")
+    
+    with open(resource_path, 'rb') as f:
+        return pickle.load(f)
 
 
 # Environment Detection
@@ -123,27 +142,45 @@ HYPERPARAMS = {
     },
 }
 
-# Arabic Diacritics
-ARABIC_DIACRITICS = [
-    '\u064B',  # Fathatan
-    '\u064C',  # Dammatan
-    '\u064D',  # Kasratan
-    '\u064E',  # Fatha
-    '\u064F',  # Damma
-    '\u0650',  # Kasra
-    '\u0651',  # Shadda
-    '\u0652',  # Sukun
-    '\u0653',  # Maddah
-    '\u0654',  # Hamza Above
-    '\u0655',  # Hamza Below
-    '\u0656',  # Subscript Alef
-    '\u0657',  # Inverted Damma
-    '\u0658',  # Mark Noon Ghunna
-]
+# Load resources from pickle files
+try:
+    ARABIC_DIACRITICS = load_pickle_resource('diacritics.pickle')
+    # Convert to list if it's a set for consistency
+    if isinstance(ARABIC_DIACRITICS, set):
+        ARABIC_DIACRITICS = sorted(list(ARABIC_DIACRITICS))
+    
+    DIACRITIC_TO_ID = load_pickle_resource('diacritic2id.pickle')
+    
+    ARABIC_LETTERS = load_pickle_resource('arabic_letters.pickle')
+    # Convert to list if it's a set for easier iteration
+    if isinstance(ARABIC_LETTERS, set):
+        ARABIC_LETTERS = sorted(list(ARABIC_LETTERS))
+        
+except FileNotFoundError as e:
+    print(f"Warning: Could not load pickle resources: {e}")
+    print("Falling back to hardcoded values...")
+    # Fallback to hardcoded values
+    ARABIC_DIACRITICS = [
+        '\u064B',  # Fathatan
+        '\u064C',  # Dammatan
+        '\u064D',  # Kasratan
+        '\u064E',  # Fatha
+        '\u064F',  # Damma
+        '\u0650',  # Kasra
+        '\u0651',  # Shadda
+        '\u0652',  # Sukun
+        '\u0653',  # Maddah
+        '\u0654',  # Hamza Above
+        '\u0655',  # Hamza Below
+        '\u0656',  # Subscript Alef
+        '\u0657',  # Inverted Damma
+        '\u0658',  # Mark Noon Ghunna
+    ]
+    DIACRITIC_TO_ID = {diac: idx for idx, diac in enumerate(ARABIC_DIACRITICS)}
+    DIACRITIC_TO_ID['_'] = len(ARABIC_DIACRITICS)
+    ARABIC_LETTERS = None
 
-# Diacritic to ID mapping
-DIACRITIC_TO_ID = {diac: idx for idx, diac in enumerate(ARABIC_DIACRITICS)}
-DIACRITIC_TO_ID['_'] = len(ARABIC_DIACRITICS)  # No diacritic
+# Inverse mapping
 ID_TO_DIACRITIC = {idx: diac for diac, idx in DIACRITIC_TO_ID.items()}
 
 # Number of diacritic classes
