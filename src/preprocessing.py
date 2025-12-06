@@ -261,27 +261,36 @@ def load_dataset(file_path: Path) -> List[str]:
     return sentences
 
 
-def prepare_dataset(file_path: Path) -> Tuple[List[str], List[List[int]]]:
+def prepare_dataset(input_file: str, output_prefix: str) -> Tuple[List[str], List[List[int]]]:
     """
-    Load and prepare dataset for training.
+    Load and prepare dataset for training, then save as pickle files.
     Complete preprocessing pipeline:
     1. Load sentences from file
     2. Clean Arabic text (normalize, remove non-Arabic chars)
     3. Extract diacritic labels (before cleaning removes them)
-    4. Return clean texts and their corresponding label sequences
+    4. Save processed data as pickle file
     
     Args:
-        file_path: Path to dataset file
+        input_file: Path to input dataset file (str or Path)
+        output_prefix: Path prefix for output pickle file (e.g., 'data/processed_train')
         
     Returns:
         Tuple of (clean_texts, label_sequences)
     """
+    import pickle
+    
+    file_path = Path(input_file)
     sentences = load_dataset(file_path)
     
     clean_texts = []
     label_sequences = []
     
-    for sentence in sentences:
+    print(f"Processing {len(sentences)} sentences from {file_path}...")
+    
+    for i, sentence in enumerate(sentences):
+        if (i + 1) % 10000 == 0:
+            print(f"  Processed {i + 1}/{len(sentences)} sentences...")
+        
         # Step 1: Clean the Arabic text (normalize, remove non-Arabic)
         # This preserves diacritics while cleaning everything else
         cleaned_sentence = clean_arabic_text(sentence)
@@ -299,6 +308,20 @@ def prepare_dataset(file_path: Path) -> Tuple[List[str], List[List[int]]]:
         
         clean_texts.append(clean_text)
         label_sequences.append(labels)
+    
+    # Save to pickle file
+    output_file = Path(f"{output_prefix}.pkl")
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    
+    data = {
+        'texts': clean_texts,
+        'labels': label_sequences
+    }
+    
+    with open(output_file, 'wb') as f:
+        pickle.dump(data, f)
+    
+    print(f"✓ Saved {len(clean_texts)} processed sentences to {output_file}")
     
     return clean_texts, label_sequences
 
