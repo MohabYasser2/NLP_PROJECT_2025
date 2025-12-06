@@ -1,13 +1,16 @@
 # Arabic Diacritization Project - TODO List
+
 **Team Members:** 3 persons  
 **Project Duration:** Week 6 - Week 12 (6 weeks)  
 **Final Delivery:** Week 12  
-**Test Set Release:** ONE DAY before final delivery  
+**Test Set Release:** ONE DAY before final delivery
 
 ---
 
 ## 🎯 Project Overview
+
 Build an Arabic diacritization system that restores missing diacritics in Arabic text. The project will be evaluated based on:
+
 1. **Kaggle Ranking** (DER metric)
 2. **Technical Approach** (preprocessing, features, models)
 3. **Equal Workload Division**
@@ -17,12 +20,15 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ## 👥 Team Member Roles & Responsibilities
 
 ### 🔵 Team Member 1: Data Engineering & Preprocessing Lead
+
 **Primary Focus:** Data pipeline, preprocessing, and initial feature extraction
 
 ### 🟢 Team Member 2: Feature Engineering & Model Development Lead
+
 **Primary Focus:** Advanced features, baseline models, and experimentation
 
 ### 🟡 Team Member 3: Deep Learning & Deployment Lead
+
 **Primary Focus:** Deep learning models, evaluation, and final deliverables
 
 ---
@@ -36,6 +42,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ### Week 6-7: Data Understanding & Preprocessing
 
 #### Task 1.1: Data Exploration & Analysis ⏱️ 8 hours
+
 - [ ] Load and inspect train.txt (50k lines), dev.txt (2.5k lines)
 - [ ] Analyze dataset statistics:
   - [ ] Sentence length distribution
@@ -47,6 +54,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Share insights with team via presentation
 
 **Deliverables:**
+
 - Completed EDA notebook with visualizations
 - Data statistics report (PDF/markdown)
 - Presentation slides for team meeting
@@ -54,6 +62,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ---
 
 #### Task 1.2: Data Cleaning Pipeline ⏱️ 10 hours
+
 - [ ] Implement `clean_arabic_text()` function in `src/preprocessing.py`:
   - [ ] Remove HTML tags
   - [ ] Remove English letters and numbers
@@ -66,6 +75,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Document cleaning rules in project report
 
 **Deliverables:**
+
 - Fully implemented and tested cleaning pipeline
 - Unit tests with >90% coverage
 - Cleaning pipeline documentation
@@ -73,6 +83,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ---
 
 #### Task 1.3: Diacritic Extraction & Label Creation ⏱️ 8 hours
+
 - [ ] Implement `extract_labels_simple()` - extract diacritics as labels
 - [ ] Implement `strip_diacritics()` - remove all diacritics
 - [ ] Handle multiple diacritics per character (Shadda combinations)
@@ -82,6 +93,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Write unit tests for extraction functions
 
 **Deliverables:**
+
 - Label extraction functions with tests
 - Diacritic distribution analysis
 - Alignment validation report
@@ -89,6 +101,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ---
 
 #### Task 1.4: Tokenization Implementation ⏱️ 6 hours
+
 - [ ] Implement character-level tokenization (`tokenize_characters()`)
 - [ ] Implement word-level tokenization (`tokenize_words()`)
 - [ ] Experiment with subword tokenization (optional)
@@ -98,6 +111,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Document tokenization strategy choice
 
 **Deliverables:**
+
 - Complete tokenization module
 - Vocabulary files (character, word)
 - Tokenization comparison report
@@ -105,6 +119,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ---
 
 #### Task 1.5: Basic Feature Extraction - Bag of Words & TF-IDF ⏱️ 8 hours
+
 - [ ] Implement character-level Bag of Words (`BagOfCharactersExtractor`)
 - [ ] Implement character n-gram TF-IDF (`TfidfFeatureExtractor`)
 - [ ] Experiment with n-gram ranges (unigram, bigram, trigram)
@@ -114,6 +129,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Document feature extraction in report
 
 **Deliverables:**
+
 - BOW and TF-IDF feature extractors
 - Extracted features saved as .pkl files
 - Feature analysis notebook
@@ -121,6 +137,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ---
 
 #### Task 1.6: Data Pipeline Integration ⏱️ 6 hours
+
 - [ ] Create end-to-end data preprocessing pipeline
 - [ ] Implement data loading utilities (`load_dataset()`)
 - [ ] Create `prepare_dataset()` function for full pipeline
@@ -130,6 +147,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Write integration tests
 
 **Deliverables:**
+
 - Complete preprocessing pipeline
 - Cached preprocessed data
 - Pipeline documentation
@@ -139,6 +157,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ### Week 8: Support & Collaboration
 
 #### Task 1.7: Support Team Members ⏱️ 6 hours
+
 - [ ] Assist Team Member 2 with feature extraction debugging
 - [ ] Provide preprocessed data in required formats
 - [ ] Help Team Member 3 with data loading for deep learning
@@ -150,6 +169,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ### Week 9-10: Optimization & Documentation
 
 #### Task 1.8: Data Augmentation ⏱️ 8 hours
+
 - [ ] Research Arabic text augmentation techniques
 - [ ] Implement character substitution augmentation
 - [ ] Implement back-translation (if feasible)
@@ -158,6 +178,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Document augmentation strategies
 
 **Deliverables:**
+
 - Data augmentation module
 - Augmented datasets
 - Performance comparison report
@@ -165,6 +186,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ---
 
 #### Task 1.9: Preprocessing Optimization ⏱️ 6 hours
+
 - [ ] Profile preprocessing pipeline for bottlenecks
 - [ ] Optimize slow functions (vectorization, caching)
 - [ ] Implement parallel processing for large datasets
@@ -173,6 +195,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Document optimization techniques
 
 **Deliverables:**
+
 - Optimized preprocessing code
 - Performance benchmark report
 
@@ -181,6 +204,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ### Week 11-12: Final Deliverables
 
 #### Task 1.10: Test Set Processing ⏱️ 4 hours
+
 - [ ] Receive test set (ONE DAY before deadline)
 - [ ] Apply preprocessing pipeline to test set
 - [ ] Validate preprocessing on test data
@@ -190,6 +214,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ---
 
 #### Task 1.11: Documentation & Report Writing ⏱️ 8 hours
+
 - [ ] Write "Data Preprocessing" section of final report:
   - [ ] Data cleaning techniques
   - [ ] Tokenization approach
@@ -201,6 +226,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Prepare preprocessing slides for presentation
 
 **Deliverables:**
+
 - Complete preprocessing documentation
 - Report sections and diagrams
 - Presentation slides
@@ -216,6 +242,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ### Week 6-7: Advanced Feature Engineering
 
 #### Task 2.1: Contextual Feature Extraction ⏱️ 10 hours
+
 - [ ] Implement `ContextualFeatureExtractor` for CRF
 - [ ] Extract character-level features:
   - [ ] Current character, previous/next characters
@@ -231,6 +258,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Document feature engineering decisions
 
 **Deliverables:**
+
 - Contextual feature extractor module
 - Feature templates documentation
 - Feature extraction tests
@@ -238,6 +266,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ---
 
 #### Task 2.2: Word Embeddings Integration ⏱️ 8 hours
+
 - [ ] Research Arabic word embeddings (FastText, AraVec, Word2Vec)
 - [ ] Download or train Arabic embeddings
 - [ ] Implement `EmbeddingLoader` class
@@ -248,6 +277,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Document embedding choice and preprocessing
 
 **Deliverables:**
+
 - Embedding loader module
 - Pre-trained embeddings integrated
 - Embedding evaluation report
@@ -255,6 +285,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ---
 
 #### Task 2.3: Trainable Embeddings Setup ⏱️ 6 hours
+
 - [ ] Design embedding layer for neural models
 - [ ] Implement `CharacterIndexer` for vocabulary
 - [ ] Create embedding initialization strategies
@@ -264,6 +295,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Document embedding architecture
 
 **Deliverables:**
+
 - Trainable embedding layer
 - Vocabulary indexer
 - Architecture documentation
@@ -273,6 +305,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ### Week 7-8: Baseline Model Development
 
 #### Task 2.4: ML Baseline Models ⏱️ 12 hours
+
 - [ ] Implement Logistic Regression baseline (`ml_baseline.py`):
   - [ ] Use TF-IDF features from Team Member 1
   - [ ] Train character-level classifier
@@ -286,6 +319,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Create baseline comparison table
 
 **Deliverables:**
+
 - Logistic Regression and SVM models
 - Trained model weights (.pkl files)
 - Baseline performance report
@@ -293,6 +327,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ---
 
 #### Task 2.5: CRF Model Development ⏱️ 12 hours
+
 - [ ] Implement CRF model using sklearn-crfsuite (`crf_baseline.py`)
 - [ ] Use contextual features from Task 2.1
 - [ ] Train CRF on character sequences
@@ -306,6 +341,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Document CRF modeling approach
 
 **Deliverables:**
+
 - CRF model implementation
 - Trained CRF model (.pkl)
 - Feature importance analysis
@@ -316,6 +352,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ### Week 8-9: Experimentation & Optimization
 
 #### Task 2.6: Feature Selection & Engineering ⏱️ 8 hours
+
 - [ ] Analyze feature importance from baseline models
 - [ ] Implement feature selection methods:
   - [ ] Mutual information
@@ -330,6 +367,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Measure performance improvements
 
 **Deliverables:**
+
 - Feature selection module
 - Optimized feature sets
 - Performance comparison report
@@ -337,6 +375,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ---
 
 #### Task 2.7: Hyperparameter Tuning ⏱️ 10 hours
+
 - [ ] Set up hyperparameter tuning framework
 - [ ] Implement grid search for ML baselines
 - [ ] Implement random search for CRF
@@ -346,6 +385,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Create hyperparameter sensitivity analysis
 
 **Deliverables:**
+
 - Tuning scripts and results
 - Best hyperparameters documented
 - Sensitivity analysis report
@@ -353,6 +393,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ---
 
 #### Task 2.8: Model Ensemble Development ⏱️ 8 hours
+
 - [ ] Design ensemble strategy:
   - [ ] Voting (majority, weighted)
   - [ ] Stacking
@@ -364,6 +405,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Document ensemble approach
 
 **Deliverables:**
+
 - Ensemble model implementation
 - Ensemble performance report
 
@@ -372,6 +414,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ### Week 10: Collaboration & Support
 
 #### Task 2.9: Support Deep Learning Development ⏱️ 6 hours
+
 - [ ] Provide features to Team Member 3 for LSTM/RNN
 - [ ] Assist with debugging feature integration
 - [ ] Review neural model architectures
@@ -383,6 +426,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ### Week 11-12: Final Model Selection & Documentation
 
 #### Task 2.10: Comprehensive Model Evaluation ⏱️ 8 hours
+
 - [ ] Evaluate all models on dev set using DER metric
 - [ ] Perform statistical significance testing
 - [ ] Create confusion matrices for diacritics
@@ -392,6 +436,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Recommend best model for test set
 
 **Deliverables:**
+
 - Complete evaluation report
 - Model comparison table
 - Error analysis document
@@ -399,6 +444,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ---
 
 #### Task 2.11: Documentation & Report Writing ⏱️ 8 hours
+
 - [ ] Write "Feature Extraction" section:
   - [ ] Description of all 3+ features
   - [ ] Feature engineering process
@@ -413,6 +459,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Prepare model slides for presentation
 
 **Deliverables:**
+
 - Feature and model sections of report
 - Architecture diagrams
 - Presentation slides
@@ -428,6 +475,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ### Week 7-8: Deep Learning Model Development
 
 #### Task 3.1: RNN/LSTM Architecture Design ⏱️ 8 hours
+
 - [ ] Research state-of-the-art sequence models for diacritization
 - [ ] Design BiLSTM architecture (`lstm_char.py`):
   - [ ] Character embedding layer
@@ -439,6 +487,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Document architecture decisions
 
 **Deliverables:**
+
 - BiLSTM model implementation
 - Architecture diagram
 - Model documentation
@@ -446,6 +495,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ---
 
 #### Task 3.2: LSTM Training Pipeline ⏱️ 12 hours
+
 - [ ] Implement training loop in `src/train.py`:
   - [ ] Data loading with DataLoader
   - [ ] Loss function (CrossEntropyLoss)
@@ -459,6 +509,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Train initial LSTM model
 
 **Deliverables:**
+
 - Complete training pipeline
 - Trained LSTM model (.pt file)
 - Training logs
@@ -466,6 +517,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ---
 
 #### Task 3.3: Advanced RNN Architectures ⏱️ 10 hours
+
 - [ ] Implement GRU variant (compare with LSTM)
 - [ ] Implement LSTM + CRF hybrid model:
   - [ ] LSTM encoder
@@ -478,6 +530,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Document architecture differences
 
 **Deliverables:**
+
 - GRU and LSTM+CRF models
 - Attention implementation (if time permits)
 - Architecture comparison report
@@ -487,6 +540,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ### Week 8-9: Model Optimization & Experimentation
 
 #### Task 3.4: Hyperparameter Optimization ⏱️ 10 hours
+
 - [ ] Tune LSTM hyperparameters:
   - [ ] Embedding dimension (64, 128, 256)
   - [ ] Hidden dimension (128, 256, 512)
@@ -499,6 +553,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Select best configuration
 
 **Deliverables:**
+
 - Hyperparameter tuning results
 - Best model configuration
 - Tuning log files
@@ -506,6 +561,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ---
 
 #### Task 3.5: Contextual Embeddings Integration ⏱️ 12 hours
+
 - [ ] Research Arabic pre-trained models (AraBERT, mBERT, XLM-R)
 - [ ] Implement Transformer-based approach (optional but recommended):
   - [ ] Load pre-trained AraBERT
@@ -517,6 +573,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Document transformer approach
 
 **Deliverables:**
+
 - Transformer model (if implemented)
 - Contextual embeddings extractor
 - Performance comparison report
@@ -526,6 +583,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ### Week 9-10: Evaluation & Analysis
 
 #### Task 3.6: DER Metric Implementation ⏱️ 6 hours
+
 - [ ] Implement DER (Diacritic Error Rate) calculation
 - [ ] Implement character-level accuracy
 - [ ] Implement per-class precision, recall, F1
@@ -535,6 +593,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Identify best performing model
 
 **Deliverables:**
+
 - DER metric implementation
 - Evaluation script
 - Complete evaluation report for all models
@@ -542,6 +601,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ---
 
 #### Task 3.7: Error Analysis & Debugging ⏱️ 8 hours
+
 - [ ] Perform detailed error analysis:
   - [ ] Identify most confused diacritics
   - [ ] Analyze errors by word length
@@ -553,6 +613,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Document common failure cases
 
 **Deliverables:**
+
 - Error analysis notebook
 - Visualization of errors
 - Error mitigation report
@@ -560,6 +621,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ---
 
 #### Task 3.8: Model Comparison & Selection ⏱️ 6 hours
+
 - [ ] Create comprehensive comparison table:
   - [ ] All models from team members
   - [ ] DER scores on dev set
@@ -572,6 +634,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Get team approval on final model
 
 **Deliverables:**
+
 - Model comparison table
 - Final model selection document
 - Team approval sign-off
@@ -581,6 +644,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ### Week 11: Inference & Demo Development
 
 #### Task 3.9: Inference Pipeline Development ⏱️ 8 hours
+
 - [ ] Implement inference script (`src/infer.py`):
   - [ ] Load trained model
   - [ ] Process single sentence
@@ -595,6 +659,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Test on various inputs
 
 **Deliverables:**
+
 - Complete inference script
 - Optimized inference pipeline
 - Inference documentation
@@ -602,6 +667,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ---
 
 #### Task 3.10: Working Demo Development ⏱️ 10 hours
+
 - [ ] Design demo interface (choose one):
   - [ ] **Option 1:** Command-line interactive demo
   - [ ] **Option 2:** Jupyter notebook demo
@@ -615,6 +681,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Record demo video
 
 **Deliverables:**
+
 - Working demo application
 - Demo usage guide
 - Demo video recording
@@ -624,6 +691,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ### Week 12: Final Submission & Testing
 
 #### Task 3.11: Test Set Processing & Kaggle Submission ⏱️ 8 hours
+
 - [ ] **DAY BEFORE DEADLINE:** Receive test set
 - [ ] Coordinate with Team Member 1 for preprocessing
 - [ ] Load final selected model
@@ -635,6 +703,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] If needed, debug and resubmit
 
 **Deliverables:**
+
 - Test set predictions
 - Kaggle submission file
 - Kaggle rank screenshot
@@ -642,6 +711,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ---
 
 #### Task 3.12: Final Documentation & Deliverables ⏱️ 10 hours
+
 - [ ] Write "Model Training" section (deep learning models)
 - [ ] Write "Evaluation" section:
   - [ ] DER scores for all trials
@@ -657,6 +727,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Prepare presentation slides
 
 **Deliverables:**
+
 - Complete project report
 - All model weights
 - Organized code repository
@@ -665,6 +736,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ---
 
 #### Task 3.13: Presentation Preparation ⏱️ 6 hours
+
 - [ ] Create presentation slides:
   - [ ] Problem overview
   - [ ] Pipeline diagram
@@ -680,6 +752,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Prepare for Q&A
 
 **Deliverables:**
+
 - Complete presentation slides
 - Speaker notes
 - Rehearsal recording
@@ -693,18 +766,21 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ## 🤝 SHARED RESPONSIBILITIES (All Team Members)
 
 ### Communication & Collaboration
+
 - [ ] **Weekly team meetings** (1 hour × 6 weeks = 6 hours each)
 - [ ] **Code reviews** (review teammates' pull requests)
 - [ ] **Integration testing** (ensure all components work together)
 - [ ] **Documentation reviews** (proofread and edit)
 
 ### Project Management
+
 - [ ] Set up GitHub repository
 - [ ] Create project board (Trello/Jira/GitHub Projects)
 - [ ] Track tasks and deadlines
 - [ ] Update workload division document
 
 ### Final Review (Week 12)
+
 - [ ] Review complete project report (all members)
 - [ ] Test all code scripts (all members)
 - [ ] Verify all deliverables (all members)
@@ -714,11 +790,11 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 
 ## 📊 WORKLOAD SUMMARY
 
-| Team Member | Primary Focus | Est. Hours |
-|-------------|---------------|------------|
-| **Member 1** | Data Engineering & Preprocessing | ~78 hours |
-| **Member 2** | Feature Engineering & ML Models | ~96 hours |
-| **Member 3** | Deep Learning & Deployment | ~104 hours |
+| Team Member  | Primary Focus                    | Est. Hours |
+| ------------ | -------------------------------- | ---------- |
+| **Member 1** | Data Engineering & Preprocessing | ~78 hours  |
+| **Member 2** | Feature Engineering & ML Models  | ~96 hours  |
+| **Member 3** | Deep Learning & Deployment       | ~104 hours |
 
 **Note:** Hours are estimates. Adjust based on actual progress and team capacity.
 
@@ -727,30 +803,35 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ## 📅 MILESTONE TIMELINE
 
 ### Week 6-7: Foundation
+
 - Data preprocessing complete
 - EDA finished
 - Basic features extracted (BOW, TF-IDF)
 - Baseline models trained (LR, SVM)
 
 ### Week 8-9: Model Development
+
 - CRF model trained
 - LSTM/RNN models implemented and trained
 - Word embeddings integrated
 - Advanced features implemented
 
 ### Week 10: Optimization
+
 - Hyperparameter tuning complete
 - Model ensemble created
 - All models evaluated on dev set
 - Final model selected
 
 ### Week 11: Finalization
+
 - Demo developed
 - Inference pipeline ready
 - Documentation 80% complete
 - Presentation drafted
 
 ### Week 12: Submission
+
 - **Day -1:** Test set processing and Kaggle submission
 - **Final Day:** All deliverables submitted
 - Presentation ready
@@ -760,6 +841,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ## ✅ DELIVERABLES CHECKLIST
 
 ### 1. Final Project Document
+
 - [ ] Project pipeline diagram
 - [ ] Data preprocessing section (Member 1)
 - [ ] Feature extraction section (Member 2)
@@ -769,6 +851,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] Workload division (All members)
 
 ### 2. Code Scripts
+
 - [ ] All Python files in `src/`
 - [ ] Jupyter notebooks in `notebooks/`
 - [ ] Unit tests in `tests/`
@@ -776,16 +859,19 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - [ ] requirements.txt
 
 ### 3. Model Weights
+
 - [ ] Final model used for Kaggle submission
 - [ ] Format: .pt (PyTorch) or .pkl (sklearn)
 - [ ] Model loading instructions
 
 ### 4. Presentation
+
 - [ ] Slide deck (PDF/PPTX)
 - [ ] Speaker notes
 - [ ] Timing: within allocated time
 
 ### 5. Working Demo
+
 - [ ] Demo application
 - [ ] Demo usage guide
 - [ ] Example inputs/outputs
@@ -795,12 +881,14 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ## 🎯 SUCCESS CRITERIA
 
 ### Technical Requirements Met
+
 - ✅ At least **3 different features** (BOW, TF-IDF, Embeddings, Contextual)
 - ✅ At least **2 machine learning models** (CRF, LSTM, + baselines)
 - ✅ DER metric implemented correctly
 - ✅ All preprocessing techniques documented
 
 ### Deliverables Complete
+
 - ✅ Final report with all sections
 - ✅ All code scripts functional
 - ✅ Model weights saved
@@ -808,6 +896,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 - ✅ Demo working
 
 ### Competitive Performance
+
 - 🎯 Achieve competitive Kaggle ranking
 - 🎯 DER < 10% (target for good performance)
 - 🎯 Beat baseline models significantly
@@ -817,25 +906,33 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ## 🚨 RISK MITIGATION
 
 ### Risk 1: Test set released 1 day before deadline
-**Mitigation:** 
+
+**Mitigation:**
+
 - Finalize all models by Week 11
 - Test inference pipeline thoroughly
 - Have preprocessing ready to process test set quickly
 
 ### Risk 2: Model performance not satisfactory
+
 **Mitigation:**
+
 - Start with simple baselines early
 - Iterate and improve incrementally
 - Try multiple approaches in parallel
 
 ### Risk 3: Integration issues between team members
+
 **Mitigation:**
+
 - Define clear interfaces early
 - Weekly integration testing
 - Use version control (Git) properly
 
 ### Risk 4: Unequal workload
+
 **Mitigation:**
+
 - Track hours weekly
 - Redistribute tasks if needed
 - Help each other when blocked
@@ -855,6 +952,7 @@ Build an Arabic diacritization system that restores missing diacritics in Arabic
 ## 🏆 FINAL NOTES
 
 This TODO list ensures:
+
 1. ✅ **Equal division** of work among 3 team members
 2. ✅ **All project requirements** covered
 3. ✅ **Clear deliverables** for each task
