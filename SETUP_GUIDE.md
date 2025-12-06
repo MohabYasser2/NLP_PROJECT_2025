@@ -25,12 +25,14 @@
 ## Prerequisites
 
 ### System Requirements
+
 - **Python:** 3.8 or higher
 - **RAM:** Minimum 8GB (16GB recommended for LSTM training)
 - **Storage:** At least 2GB free space
 - **OS:** Windows, macOS, or Linux
 
 ### Required Knowledge
+
 - Basic Python programming
 - Command line/terminal usage
 - Understanding of machine learning concepts (helpful but not required)
@@ -84,6 +86,7 @@ python -c "import torch; import sklearn; import numpy; print('All packages insta
 ### Step 1: Verify Dataset Files
 
 Your dataset should be in the `data/` directory with these files:
+
 - `train.txt` - Training data with diacritized Arabic text
 - `dev.txt` (or `val.txt`) - Development/validation data
 - `test.txt` - Test data
@@ -115,6 +118,7 @@ Get-Content data\train.txt -Head 5
 ```
 
 Expected format:
+
 ```
 مَرْحَبًا بِكَ فِي الْمَشْرُوعِ
 أَهْلًا وَسَهْلًا
@@ -178,6 +182,7 @@ Navigate to: `notebooks/01_eda.ipynb`
 ### Step 4: Review Outputs
 
 The notebook will show you:
+
 - Dataset size and statistics
 - Sequence length distributions
 - Diacritic frequency analysis
@@ -185,6 +190,7 @@ The notebook will show you:
 - Data quality checks
 
 **Key Insights to Note:**
+
 - Total number of training samples
 - Average sequence length
 - Most common diacritics
@@ -206,6 +212,7 @@ python src/train.py --model crf --seed 42
 ```
 
 **What happens:**
+
 1. Loads training and dev data
 2. Extracts contextual features
 3. Trains CRF model
@@ -249,6 +256,7 @@ python src/train.py --model lstm_char --epochs 20 --batch_size 32 --learning_rat
 ```
 
 **Monitor Training:**
+
 - Watch the loss decreasing
 - Dev DER should improve
 - Early stopping will trigger if no improvement
@@ -290,10 +298,12 @@ python src/evaluate.py --model_path models/lstm_char_best.pt --model_type lstm_c
 The evaluation will show:
 
 1. **Overall Metrics:**
+
    - **DER (Diacritic Error Rate):** Primary metric - lower is better
    - **Accuracy:** Percentage of correctly predicted diacritics
 
 2. **Per-Class Metrics:**
+
    - Precision, Recall, F1 for each diacritic
    - Support (number of occurrences)
 
@@ -301,6 +311,7 @@ The evaluation will show:
    - Average performance across all classes
 
 **Example Output:**
+
 ```
 EVALUATION RESULTS
 ================================================================================
@@ -310,7 +321,7 @@ Overall Metrics:
   Accuracy: 0.8766 (87.66%)
 
 Per-Class Metrics:
-Class           Precision    Recall       F1-Score     Support    
+Class           Precision    Recall       F1-Score     Support
 --------------------------------------------------------------------------------
 Fatha           0.9012       0.8923       0.8967       15234
 Damma           0.8756       0.8634       0.8695       12456
@@ -326,6 +337,7 @@ jupyter notebook notebooks/02_baseline_training.ipynb
 ```
 
 Run all cells to see:
+
 - Side-by-side model comparison
 - Bar charts of performance
 - Detailed error analysis
@@ -342,6 +354,7 @@ python src/infer.py --model_path models/crf_best.pkl --model_type crf --interact
 ```
 
 **Usage:**
+
 ```
 >>> مرحبا بك
 Diacritized: مَرْحَبًا بِكَ
@@ -361,6 +374,7 @@ python src/infer.py --model_path models/crf_best.pkl --model_type crf --text "م
 ```
 
 **Output:**
+
 ```
 Input:  مرحبا بك في المشروع
 Output: مَرْحَبًا بِكَ فِي الْمَشْرُوعِ
@@ -384,6 +398,7 @@ Get-Content output.txt
 ```
 
 **Expected output.txt:**
+
 ```
 مَرْحَبًا بِكَ
 أَهْلًا وَسَهْلًا
@@ -478,6 +493,7 @@ Compress-Archive -Path src/,notebooks/,requirements.txt -DestinationPath kaggle_
 ### Step 6: Update Paths in Kaggle Notebook
 
 The notebook should auto-detect Kaggle environment. Verify the first cell shows:
+
 ```
 Running on Kaggle: True
 ```
@@ -510,6 +526,7 @@ sys.path.append('/kaggle/input/arabic-diacritization-code')
 **Error:** `ModuleNotFoundError: No module named 'src'`
 
 **Solution:**
+
 ```powershell
 # Make sure you're in the project root directory
 cd "c:\Users\Asus\Desktop\UNI\Courses\Year5_1st_Term\NLP\Final Project"
@@ -526,6 +543,7 @@ python -m src.train --model crf
 **Error:** `FileNotFoundError: Dataset file not found`
 
 **Solution:**
+
 ```powershell
 # Check if data files exist
 Test-Path data/train.txt
@@ -541,6 +559,7 @@ Copy-Item dataset/* data/
 **Error:** LSTM training is slow
 
 **Solution:**
+
 ```powershell
 # Check CUDA availability
 python -c "import torch; print(torch.cuda.is_available())"
@@ -556,6 +575,7 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 **Error:** `RuntimeError: CUDA out of memory`
 
 **Solution:**
+
 ```powershell
 # Reduce batch size
 python src/train.py --model lstm_char --batch_size 16
@@ -569,6 +589,7 @@ python src/train.py --model lstm_char --batch_size 8
 **Error:** PowerShell execution policy restriction
 
 **Solution:**
+
 ```powershell
 # Run PowerShell as Administrator
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine
@@ -583,6 +604,7 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
 ### Issue 6: Jupyter Notebook Won't Start
 
 **Solution:**
+
 ```powershell
 # Reinstall Jupyter
 pip install --upgrade jupyter notebook
@@ -595,6 +617,7 @@ jupyter lab
 ### Issue 7: sklearn-crfsuite Installation Fails
 
 **Solution:**
+
 ```powershell
 # Install Microsoft C++ Build Tools
 # Download from: https://visualstudio.microsoft.com/visual-cpp-build-tools/
@@ -727,26 +750,28 @@ Get-Content submission.txt -Head 10
 
 Expected performance on standard Arabic diacritization datasets:
 
-| Model | Training Time | DER (Test) | Accuracy |
-|-------|--------------|------------|----------|
-| Logistic Regression | 5-10 min | ~15-20% | ~80-85% |
-| SVM | 10-20 min | ~12-18% | ~82-88% |
-| CRF | 15-30 min | ~8-12% | ~88-92% |
-| BiLSTM | 1-3 hours | ~5-8% | ~92-95% |
+| Model               | Training Time | DER (Test) | Accuracy |
+| ------------------- | ------------- | ---------- | -------- |
+| Logistic Regression | 5-10 min      | ~15-20%    | ~80-85%  |
+| SVM                 | 10-20 min     | ~12-18%    | ~82-88%  |
+| CRF                 | 15-30 min     | ~8-12%     | ~88-92%  |
+| BiLSTM              | 1-3 hours     | ~5-8%      | ~92-95%  |
 
-*Note: Actual results depend on dataset size and quality*
+_Note: Actual results depend on dataset size and quality_
 
 ---
 
 ## Next Steps and Improvements
 
 ### Immediate Enhancements
+
 1. **Add test.txt to data/** if not present
 2. **Run full EDA** to understand your specific dataset
 3. **Train all baseline models** for comparison
 4. **Fine-tune best model** by adjusting hyperparameters
 
 ### Future Improvements
+
 1. Implement LSTM + CRF hybrid
 2. Add Transformer-based models (AraBERT)
 3. Implement data augmentation
@@ -759,17 +784,20 @@ Expected performance on standard Arabic diacritization datasets:
 ## Support and Resources
 
 ### Documentation
+
 - Project README: `README.md`
 - Code documentation: Docstrings in each module
 - Configuration: `src/config.py`
 
 ### Getting Help
+
 - Check error messages carefully
 - Review troubleshooting section
 - Inspect logs in `outputs/training.log`
 - Use `--help` flag: `python src/train.py --help`
 
 ### Learning Resources
+
 - Arabic NLP basics
 - Sequence labeling with CRF
 - PyTorch LSTM tutorial
