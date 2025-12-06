@@ -71,9 +71,36 @@ def extract_labels(text: str) -> Tuple[str, List[str]]:
     return clean_text, labels
 
 
+def normalize_diacritic_order(diac_seq: str) -> str:
+    """
+    Normalize the order of diacritics to match the canonical order.
+    Arabic canonical order: Shadda (ّ U+0651) comes before vowel diacritics.
+    
+    Args:
+        diac_seq: Sequence of diacritics
+        
+    Returns:
+        Normalized diacritic sequence
+    """
+    if len(diac_seq) <= 1:
+        return diac_seq
+    
+    # Shadda character
+    SHADDA = '\u0651'
+    
+    # If sequence contains shadda, ensure it comes first
+    if SHADDA in diac_seq:
+        # Separate shadda and other diacritics
+        other_diacs = diac_seq.replace(SHADDA, '')
+        # Return shadda first, then others
+        return SHADDA + other_diacs
+    
+    return diac_seq
+
+
 def extract_labels_simple(text: str) -> Tuple[str, List[int]]:
     """
-    Extract diacritics as label IDs (simplified: one diacritic per char).
+    Extract diacritics as label IDs (supports multiple diacritics per char).
     
     Args:
         text: Diacritized Arabic text
@@ -85,7 +112,8 @@ def extract_labels_simple(text: str) -> Tuple[str, List[int]]:
     label_ids = []
     
     i = 0
-    while i < len(text):
+    n = len(text)
+    while i < n:
         char = text[i]
 
         # Skip stray diacritics
@@ -93,16 +121,28 @@ def extract_labels_simple(text: str) -> Tuple[str, List[int]]:
             i += 1
             continue
 
+        # Regular character: collect it
         clean_chars.append(char)
 
-        # Check if next character is a diacritic
-        if i + 1 < len(text) and text[i + 1] in ARABIC_DIACRITICS:
-            diacritic = text[i + 1]
-            label_ids.append(DIACRITIC_TO_ID.get(diacritic, DIACRITIC_TO_ID['_']))
-        else:
-            label_ids.append(DIACRITIC_TO_ID['_'])  # No diacritic
+        # Gather all following diacritics that belong to this character
+        diac_seq = ''
+        j = i + 1
+        while j < n and text[j] in ARABIC_DIACRITICS:
+            diac_seq += text[j]
+            j += 1
 
-        i += 1
+        # Normalize diacritic order before lookup
+        diac_seq = normalize_diacritic_order(diac_seq)
+
+        # Map the combined diacritic sequence to an ID
+        if diac_seq == '':
+            label_ids.append(DIACRITIC_TO_ID[''])
+        else:
+            # Use combined diacritics as key, fallback to '' (no diacritic) if not in mapping
+            label_ids.append(DIACRITIC_TO_ID.get(diac_seq, DIACRITIC_TO_ID['']))
+
+        # Advance to next base character position
+        i = j
     
     clean_text = ''.join(clean_chars)
     
