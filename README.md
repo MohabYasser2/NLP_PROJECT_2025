@@ -8,7 +8,6 @@ A comprehensive Arabic diacritization system using machine learning and deep lea
   - BiLSTM Character-Level Model
   - CRF (Conditional Random Fields) Baseline
   - ML Baselines (Logistic Regression, SVM)
-  
 - **Kaggle Integration**: Auto-detects Kaggle environment with proper path handling
 - **Modular Design**: Clean separation of preprocessing, features, models, and evaluation
 - **Comprehensive Evaluation**: DER (Diacritic Error Rate) metric and per-class analysis
@@ -86,18 +85,21 @@ The configuration module includes fallback values if pickle files are not found.
 ### Local Setup
 
 1. **Clone the repository**:
+
 ```bash
 git clone https://github.com/YOUR_USERNAME/arabic-diacritization.git
 cd arabic-diacritization
 ```
 
 2. **Install dependencies**:
+
 ```bash
 pip install -r requirements.txt
 ```
 
 3. **Prepare your data**:
-Place your dataset files in the `data/` directory:
+   Place your dataset files in the `data/` directory:
+
 - `train.txt`: Training data
 - `dev.txt`: Development/validation data
 - `test.txt`: Test data
@@ -105,16 +107,19 @@ Place your dataset files in the `data/` directory:
 ### Training Models
 
 #### Train CRF Model
+
 ```bash
 python src/train.py --model crf
 ```
 
 #### Train Logistic Regression
+
 ```bash
 python src/train.py --model logistic_regression --features tfidf
 ```
 
 #### Train LSTM Model
+
 ```bash
 python src/train.py --model lstm_char --epochs 20 --batch_size 32
 ```
@@ -128,17 +133,20 @@ python src/evaluate.py --model_path models/crf_best.pkl --model_type crf
 ### Inference
 
 #### Interactive Mode
+
 ```bash
 python src/infer.py --model_path models/crf_best.pkl --model_type crf --interactive
 ```
 
 #### Process a File
+
 ```bash
 python src/infer.py --model_path models/crf_best.pkl --model_type crf \
     --input_file input.txt --output_file output.txt
 ```
 
 #### Diacritize Single Text
+
 ```bash
 python src/infer.py --model_path models/crf_best.pkl --model_type crf \
     --text "مرحبا بك"
@@ -170,6 +178,7 @@ sys.path.append('/kaggle/input/your-code-dataset')
 ## 📊 Evaluation Metrics
 
 ### Diacritic Error Rate (DER)
+
 The primary metric: percentage of characters with incorrect diacritic predictions.
 
 ```
@@ -179,6 +188,7 @@ DER = (Number of incorrect diacritics) / (Total characters)
 Lower is better. State-of-the-art systems achieve DER < 5%.
 
 ### Additional Metrics
+
 - Character-level accuracy
 - Per-class precision, recall, F1
 - Confusion matrix analysis
@@ -208,18 +218,21 @@ python -m unittest tests.test_preprocessing.TestStripDiacritics.test_strip_simpl
 ## 📈 Model Architectures
 
 ### 1. BiLSTM Character Model
+
 - Character-level embeddings
 - Bidirectional LSTM layers
 - Per-character diacritic prediction
 - Masking for variable-length sequences
 
 ### 2. CRF Model
+
 - Contextual feature extraction
 - Sequence labeling with CRF
 - N-gram character features
 - Position-based features
 
 ### 3. ML Baselines
+
 - TF-IDF character n-gram features
 - Logistic Regression or SVM classifier
 - Fast training and inference
@@ -227,6 +240,7 @@ python -m unittest tests.test_preprocessing.TestStripDiacritics.test_strip_simpl
 ## 🛣️ Roadmap
 
 ### Immediate TODOs
+
 - [ ] Add pre-trained embedding support (FastText, Word2Vec)
 - [ ] Implement LSTM + CRF hybrid model
 - [ ] Add data augmentation strategies
@@ -234,6 +248,7 @@ python -m unittest tests.test_preprocessing.TestStripDiacritics.test_strip_simpl
 - [ ] Add model ensemble methods
 
 ### Future Enhancements
+
 - [ ] Transformer-based models (AraBERT, mBERT)
 - [ ] Attention mechanism for LSTM
 - [ ] Multi-task learning (diacritics + POS)
@@ -251,6 +266,7 @@ Each line in the dataset files should contain a single Arabic sentence with diac
 ```
 
 The system will automatically:
+
 - Strip diacritics for input
 - Extract diacritics as labels
 - Align characters with their diacritics
@@ -286,6 +302,7 @@ Contributions are welcome! Please:
 ---
 
 **Note**: This is a research/educational project. For production use, consider:
+
 - Additional testing and validation
 - Performance optimization
 - Error handling improvements
