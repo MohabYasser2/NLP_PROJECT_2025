@@ -25,9 +25,14 @@ arabic-diacritization/
 │   ├── dev.txt
 │   └── test.txt
 │
+├── utils/                     # Pre-existing resources (pickle files)
+│   ├── arabic_letters.pickle  # Set of Arabic letters
+│   ├── diacritic2id.pickle    # Diacritic to ID mappings
+│   └── diacritics.pickle      # Set of Arabic diacritics
+│
 ├── src/                       # Source code
 │   ├── __init__.py
-│   ├── config.py              # Configuration and paths
+│   ├── config.py              # Configuration and paths (loads pickle resources)
 │   ├── preprocessing.py       # Text preprocessing utilities
 │   ├── features.py            # Feature extraction
 │   ├── utils.py               # General utilities
@@ -54,10 +59,27 @@ arabic-diacritization/
 │
 ├── models/                    # Saved models (created automatically)
 │
+├── test_pickle_loading.py    # Test script for pickle resources
 ├── requirements.txt           # Python dependencies
 ├── README.md                  # This file
 └── .gitignore                # Git ignore rules
 ```
+
+## 📦 Pre-existing Resources
+
+The project includes pre-existing pickle resources in the `utils/` folder that are automatically loaded by `src/config.py`:
+
+- **`arabic_letters.pickle`**: Set of 36 Arabic letters used in the dataset
+- **`diacritic2id.pickle`**: Dictionary mapping diacritics to integer IDs (15 mappings)
+- **`diacritics.pickle`**: Set of 8 Arabic diacritics used for labeling
+
+These resources are loaded automatically when you import from `src/config.py`. To verify they load correctly:
+
+```bash
+python test_pickle_loading.py
+```
+
+The configuration module includes fallback values if pickle files are not found.
 
 ## 🚀 Quick Start
 
