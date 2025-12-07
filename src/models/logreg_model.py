@@ -2,6 +2,7 @@
 Logistic Regression Model - FROM SCRATCH
 Pure NumPy implementation for NLP course.
 No sklearn, no pre-built ML libraries.
+Supports CUDA GPU acceleration via CuPy when available.
 """
 
 import numpy as np
@@ -11,6 +12,17 @@ import pickle
 from tqdm import tqdm
 from collections import Counter
 from scipy.sparse import csr_matrix, vstack as sparse_vstack
+
+# Try to import CuPy for GPU acceleration
+try:
+    import cupy as cp
+    from cupyx.scipy.sparse import csr_matrix as gpu_csr_matrix
+    GPU_AVAILABLE = True
+    print("✓ CuPy available - GPU acceleration enabled")
+except ImportError:
+    cp = np
+    GPU_AVAILABLE = False
+    print("✓ Running in CPU mode (NumPy)")
 
 from src.config import DIACRITIC_TO_ID, ID_TO_DIACRITIC
 
@@ -187,27 +199,41 @@ class LogisticRegressionModel:
         # Initialize weights
         num_features = X.shape[1]
         num_classes = len(self.label_to_idx)
-        self.weights = np.random.randn(num_features, num_classes) * 0.01
-        self.bias = np.zeros(num_classes)
+        
+        # Move to GPU if available
+        if GPU_AVAILABLE:
+            print("🚀 Moving data to GPU...")
+            self.weights = cp.random.randn(num_features, num_classes).astype(cp.float32) * 0.01
+            self.bias = cp.zeros(num_classes, dtype=cp.float32)
+            y_idx_gpu = cp.array(y_idx)
+            print(f"✓ Weights on GPU: {self.weights.device}")
+        else:
+            self.weights = np.random.randn(num_features, num_classes).astype(np.float32) * 0.01
+            self.bias = np.zeros(num_classes, dtype=np.float32)
+            y_idx_gpu = y_idx
         
         print(f"Training on {X.shape[0]} samples, {num_features} features, {num_classes} classes...")
         print(f"  Batch size: {self.batch_size}, Iterations: {self.max_iter}, LR: {self.learning_rate}")
         
-        # Convert sparse matrix to dense ONCE before training (if small enough)
-        # For 8.3M x 15k sparse (~3% density), this is ~15GB dense
-        print("Converting sparse matrix to dense for faster training...")
+        # Convert sparse to dense and move to GPU
+        print("Preparing data for training...")
         if hasattr(X, 'toarray'):
             X = X.toarray()
-        print(f"  Matrix in memory: {X.shape}, {X.nbytes / 1e9:.2f} GB")
+        
+        if GPU_AVAILABLE:
+            print("🚀 Moving training data to GPU (this may take a minute)...")
+            X = cp.asarray(X, dtype=cp.float32)
+            print(f"✓ Data on GPU: {X.device}, Memory: {X.nbytes / 1e9:.2f} GB")
         
         # Training loop with mini-batch gradient descent
         num_samples = X.shape[0]
+        xp = cp if GPU_AVAILABLE else np  # Use CuPy or NumPy depending on GPU availability
         
         for epoch in tqdm(range(self.max_iter), desc="Training epochs", unit="epoch"):
-            # Shuffle data (now much faster on dense array)
-            indices = np.random.permutation(num_samples)
+            # Shuffle data
+            indices = xp.random.permutation(num_samples)
             X_shuffled = X[indices]
-            y_shuffled = y_idx[indices]
+            y_shuffled = y_idx_gpu[indices]
             
             total_loss = 0
             num_batches = 0
@@ -224,23 +250,23 @@ class LogisticRegressionModel:
                 
                 # Cross-entropy loss
                 batch_size_actual = X_batch.shape[0]
-                log_probs = np.log(probs[range(batch_size_actual), y_batch] + 1e-10)
-                loss = -np.mean(log_probs)
+                log_probs = xp.log(probs[xp.arange(batch_size_actual), y_batch] + 1e-10)
+                loss = -xp.mean(log_probs)
                 
                 # Add L2 regularization
-                loss += 0.5 * self.regularization * np.sum(self.weights ** 2)
-                total_loss += loss
+                loss += 0.5 * self.regularization * xp.sum(self.weights ** 2)
+                total_loss += float(loss) if GPU_AVAILABLE else loss
                 num_batches += 1
                 
                 # Backward pass
                 # Gradient of cross-entropy + softmax
                 grad_logits = probs.copy()
-                grad_logits[range(batch_size_actual), y_batch] -= 1
+                grad_logits[xp.arange(batch_size_actual), y_batch] -= 1
                 grad_logits /= batch_size_actual
                 
                 # Gradients
                 grad_weights = X_batch.T @ grad_logits + self.regularization * self.weights
-                grad_bias = np.sum(grad_logits, axis=0)
+                grad_bias = xp.sum(grad_logits, axis=0)
                 
                 # Update parameters
                 self.weights -= self.learning_rate * grad_weights
@@ -252,6 +278,13 @@ class LogisticRegressionModel:
                 tqdm.write(f"  Epoch {epoch+1}/{self.max_iter}, Loss: {avg_loss:.4f}")
         
         self.is_fitted = True
+        
+        # Move weights back to CPU for saving/prediction
+        if GPU_AVAILABLE:
+            print("Moving weights back to CPU...")
+            self.weights = cp.asnumpy(self.weights)
+            self.bias = cp.asnumpy(self.bias)
+        
         print("✓ Training completed")
         return self
     
@@ -263,7 +296,7 @@ class LogisticRegressionModel:
         windows = self._prepare_windows(texts, window_size)
         X = self.vectorizer.transform(windows)
         
-        # Convert sparse to dense for prediction
+        # Convert sparse to dense for prediction (always on CPU for inference)
         if hasattr(X, 'toarray'):
             X = X.toarray()
         
