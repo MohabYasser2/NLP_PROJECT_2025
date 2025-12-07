@@ -115,46 +115,252 @@ class CharacterIndexer:
 # TF-IDF Feature Extractor → baseline ML features
 # ============================================================
 
-class TfidfFeatureExtractor:
-    """TF-IDF feature extraction for ML baselines."""
-    
-    def __init__(self, max_features: int = None, ngram_range: Tuple[int, int] = (1, 3)):
-        """
-        Initialize TF-IDF extractor.
+class ManualTFIDF:
+    """
+    Pure Python TF-IDF without sklearn.
+    Works on characters or n-grams depending on tokenizer.
+    """
+
+    def _init_(self, ngram:int=1):
+        self.ngram = ngram
+        self.idf_dict = {}
+        self.vocab = []
+
+    # --------------------- VOCAB BUILD -------------------------
+    def _tokenize(self, text:str)->List[str]:
+        return [text[i:i+self.ngram] for i in range(len(text)-self.ngram+1)]
+
+    def build_vocab(self, corpus:List[str]) -> None:
+        vocab_set = set()
+        for doc in corpus:
+            tokens = self._tokenize(doc)
+            vocab_set.update(tokens)
+        self.vocab = sorted(list(vocab_set))  # stable order
+
+    # ---------------------- IDF COMPUTATION ---------------------
+    def fit(self, corpus:List[str]) -> None:
+        if not self.vocab:
+            self.build_vocab(corpus)
+
+        N = len(corpus)
+        df = {term:0 for term in self.vocab}
+
+        for doc in corpus:
+            tokens = set(self._tokenize(doc))
+            for t in tokens:
+                df[t]+=1
         
-        Args:
-            max_features: Maximum number of features
-            ngram_range: N-gram range for character n-grams
+        # IDF = log(N / (1 + df))
+        self.idf_dict = {t:np.log(N/(1+df[t])) for t in self.vocab}
+
+    # ----------------------- TRANSFORM -------------------------
+    def transform(self, docs:List[str]) -> np.ndarray:
+        """Return TF-IDF vectors."""
+        vectors = []
+
+        for doc in docs:
+            tokens = self._tokenize(doc)
+            tf = {t:tokens.count(t)/max(len(tokens),1) for t in self.vocab}
+            row = np.array([ tf[t] * self.idf_dict[t] for t in self.vocab ])
+            vectors.append(row)
+
+        return np.vstack(vectors)
+
+    def fit_transform(self, corpus:List[str]):
+        self.fit(corpus)
+        return self.transform(corpus)
+class SkipGramCharEmbedding:
+    """
+    Train character embeddings from scratch using a true Skip-Gram neural network:
+    
+    Architecture:
+        - Input: one-hot vector for center character (size = vocab_size)
+        - Hidden layer: embedding matrix W_in (vocab_size x embed_dim)
+        - Output layer: W_out (vocab_size x embed_dim)
+        - Softmax over all characters to predict a context character.
+    
+    Training objective:
+        For each (center, context) pair:
+            minimize -log P(context | center)
+        where P is computed by softmax(W_out * W_in[center])
+    """
+
+    def _init_(self, embed_dim: int = 50, window: int = 3, lr: float = 0.01):
+        self.embed_dim = embed_dim
+        self.window = window
+        self.lr = lr
+
+        self.vocab: List[str] = []
+        self.char2id: dict = {}
+        self.id2char: dict = {}
+
+        # Will be initialized after build_vocab
+        self.W_in: np.ndarray = None   # (vocab_size, embed_dim)
+        self.W_out: np.ndarray = None  # (vocab_size, embed_dim)
+
+    # -------------------------------------------------
+    # 1) Vocabulary building
+    # -------------------------------------------------
+    def build_vocab(self, corpus: List[str]) -> None:
         """
-        self.max_features = max_features or HYPERPARAMS['features']['tfidf_max_features']
-        self.ngram_range = ngram_range
-        self.vectorizer = TfidfVectorizer(
-            analyzer='char',
-            ngram_range=self.ngram_range,
-            max_features=self.max_features
-        )
-    
-    def fit(self, texts: List[str]):
-        """Fit vectorizer on texts."""
-        self.vectorizer.fit(texts)
-    
-def transform(self, texts: List[str]) -> np.ndarray:
-    """Transform texts to TF-IDF features, fallback to fit if required."""
-    try:
-        return self.vectorizer.transform(texts).toarray()
-    except:
-        return self.fit_transform(texts)
+        Build character vocabulary from corpus and initialize weights.
+        """
+        chars = set("".join(corpus))
+        self.vocab = sorted(list(chars))
+        self.char2id = {c: i for i, c in enumerate(self.vocab)}
+        self.id2char = {i: c for c, i in self.char2id.items()}
 
-    def fit_transform(self, texts: List[str]) -> np.ndarray:
-        """Fit and transform in one step."""
-        return self.vectorizer.fit_transform(texts).toarray()
-    def get_feature_names(self) -> List[str]:
-        """Return the list of TF-IDF feature names (char n-grams)."""
-        return list(self.vectorizer.get_feature_names_out())
+        vocab_size = len(self.vocab)
 
-    # TODO: Add feature importance analysis
-    # TODO: Add feature name extraction
+        # Initialize weights with small random values
+        self.W_in = 0.01 * np.random.randn(vocab_size, self.embed_dim)
+        self.W_out = 0.01 * np.random.randn(vocab_size, self.embed_dim)
 
+    # -------------------------------------------------
+    # 2) Softmax helper
+    # -------------------------------------------------
+    def _softmax(self, x: np.ndarray) -> np.ndarray:
+        """
+        Numerically stable softmax.
+        """
+        x_shifted = x - np.max(x)
+        exp_x = np.exp(x_shifted)
+        return exp_x / np.sum(exp_x)
+
+    # -------------------------------------------------
+    # 3) Generate training pairs (center, context)
+    # -------------------------------------------------
+    def _generate_pairs(self, corpus: List[str]) -> List[tuple]:
+        """
+        Generate (center_char_idx, context_char_idx) pairs
+        using the given window size.
+        """
+        pairs = []
+
+        for text in corpus:
+            # Skip empty strings
+            if not text:
+                continue
+
+            for i, ch in enumerate(text):
+                if ch not in self.char2id:
+                    continue
+
+                center_id = self.char2id[ch]
+
+                # Window around the center
+                start = max(0, i - self.window)
+                end = min(len(text), i + self.window + 1)
+
+                for j in range(start, end):
+                    if j == i:
+                        continue
+                    ctx_ch = text[j]
+                    if ctx_ch not in self.char2id:
+                        continue
+                    context_id = self.char2id[ctx_ch]
+
+                    pairs.append((center_id, context_id))
+
+        return pairs
+
+    # -------------------------------------------------
+    # 4) One training step for a single pair (center, context)
+    # -------------------------------------------------
+    def _train_single_pair(self, center_id: int, context_id: int) -> float:
+        """
+        Perform forward + backward pass on a single (center, context) pair.
+        Returns the loss for monitoring.
+        """
+
+        # ---- Forward ----
+        # v_c: embedding of center character (D,)
+        v_c = self.W_in[center_id]  # (embed_dim,)
+
+        # scores for all output characters: u_k^T * v_c  (size = vocab_size)
+        scores = self.W_out @ v_c   # (vocab_size,)
+
+        # probabilities P(context | center)
+        y_pred = self._softmax(scores)  # (vocab_size,)
+
+        # true distribution (one-hot)
+        vocab_size = len(self.vocab)
+        y_true = np.zeros(vocab_size)
+        y_true[context_id] = 1.0
+
+        # cross-entropy loss: -log P(correct context)
+        loss = -np.log(y_pred[context_id] + 1e-12)
+
+        # ---- Backward ----
+        # error = y_pred - y_true
+        error = y_pred - y_true  # (vocab_size,)
+
+        # Gradients:
+        # dL/dW_out = outer(error, v_c)  (vocab_size x embed_dim)
+        grad_W_out = np.outer(error, v_c)
+
+        # dL/dv_c = error^T * W_out   (embed_dim,)
+        grad_v_c = error @ self.W_out  # (embed_dim,)
+
+        # ---- Parameter update ----
+        self.W_out -= self.lr * grad_W_out
+        self.W_in[center_id] -= self.lr * grad_v_c
+
+        return loss
+
+    # -------------------------------------------------
+    # 5) Full training loop
+    # -------------------------------------------------
+    def train(self, corpus: List[str], epochs: int = 5, shuffle: bool = True) -> None:
+        """
+        Train Skip-Gram on the given corpus.
+
+        Args:
+            corpus: list of strings (sentences or full lines)
+            epochs: number of passes over the training pairs
+            shuffle: whether to shuffle pairs each epoch
+        """
+        if self.W_in is None or self.W_out is None:
+            self.build_vocab(corpus)
+
+        pairs = self._generate_pairs(corpus)
+
+        for epoch in range(epochs):
+            if shuffle:
+                np.random.shuffle(pairs)
+
+            total_loss = 0.0
+
+            for center_id, context_id in pairs:
+                loss = self._train_single_pair(center_id, context_id)
+                total_loss += loss
+
+            avg_loss = total_loss / max(len(pairs), 1)
+            print(f"Epoch {epoch+1}/{epochs} - avg loss: {avg_loss:.4f}")
+
+    # -------------------------------------------------
+    # 6) Get embedding of a single character
+    # -------------------------------------------------
+    def get_char_embedding(self, ch: str) -> np.ndarray:
+        """
+        Return the embedding vector of a character.
+        """
+        if ch not in self.char2id:
+            # Unknown char → zero vector
+            return np.zeros(self.embed_dim)
+        return self.W_in[self.char2id[ch]]
+
+    # -------------------------------------------------
+    # 7) Encode sentence → mean of character embeddings
+    # -------------------------------------------------
+    def encode_sentence(self, text: str) -> np.ndarray:
+        """
+        Encode a whole sentence by averaging its character embeddings.
+        """
+        vecs = [self.get_char_embedding(c) for c in text if c in self.char2id]
+        if not vecs:
+            return np.zeros(self.embed_dim)
+        return np.mean(vecs, axis=0)
 # ============================================================
 # Bag-of-Characters Extractor → simple frequency model
 # ============================================================
@@ -178,12 +384,12 @@ class BagOfCharactersExtractor:
         """Fit vectorizer on texts."""
         self.vectorizer.fit(texts)
     
-def transform(self, texts: List[str]) -> np.ndarray:
-    """Transform texts to Bag-of-Characters features, fallback to fit if required."""
-    try:
-        return self.vectorizer.transform(texts).toarray()
-    except:
-        return self.fit_transform(texts)
+    def transform(self, texts: List[str]) -> np.ndarray:
+        """Transform texts to Bag-of-Characters features, fallback to fit if required."""
+        try:
+            return self.vectorizer.transform(texts).toarray()
+        except:
+            return self.fit_transform(texts)
 
     def fit_transform(self, texts: List[str]) -> np.ndarray:
         """Fit and transform in one step."""
