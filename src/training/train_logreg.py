@@ -1,4 +1,4 @@
-"""
+﻿"""
 Training Module for Logistic Regression
 Provides end-to-end training pipeline for logistic regression diacritization model.
 """
@@ -231,9 +231,10 @@ def run_logreg_training(
             for idx, text in enumerate(diacritized_texts):
                 writer.writerow([idx, text])
         
-        print(f"✓ Predictions saved to {output_file}")
+        print(f"âœ“ Predictions saved to {output_file}")
 
 
 if __name__ == '__main__':
     # Run training
     run_logreg_training()
+

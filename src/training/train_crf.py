@@ -1,4 +1,4 @@
-"""
+﻿"""
 Training Module for CRF
 Provides end-to-end training pipeline for CRF diacritization model.
 """
@@ -144,7 +144,7 @@ def train_crf(
         features_path = Path(save_path).parent / 'crf_features.pkl'
         with open(features_path, 'wb') as f:
             pickle.dump(feature_extractor, f)
-        print(f"✓ Feature extractor saved to {features_path}")
+        print(f"âœ“ Feature extractor saved to {features_path}")
     
     print("\n" + "="*60)
     print("TRAINING COMPLETED SUCCESSFULLY")
@@ -238,9 +238,10 @@ def run_crf_training(
             for idx, text in enumerate(diacritized_texts):
                 writer.writerow([idx, text])
         
-        print(f"✓ Predictions saved to {output_file}")
+        print(f"âœ“ Predictions saved to {output_file}")
 
 
 if __name__ == '__main__':
     # Run training
     run_crf_training()
+

@@ -376,7 +376,7 @@ class CRFModel:
                 print(f"  Iteration {iteration+1}/{self.max_iter}, Avg Log-Likelihood: {avg_ll:.4f}")
         
         self.is_fitted = True
-        print("✓ CRF training completed")
+        print("[OK] CRF training completed")
         return self
     
     def viterbi_decode(self, features: np.ndarray) -> np.ndarray:
@@ -514,10 +514,10 @@ class CRFModel:
                 result.append(char)
                 if label_idx < len(predicted_labels):
                     label = predicted_labels[label_idx]
-                    if label != 0 and label in ID_TO_DIACRITIC:
-                        diacritic = ID_TO_DIACRITIC[label]
-                        if diacritic != '_' and diacritic != '':
-                            result.append(diacritic)
+                    diacritic = ID_TO_DIACRITIC.get(label, '')
+                    # Only add non-empty diacritics
+                    if diacritic:
+                        result.append(diacritic)
                     label_idx += 1
         
         return ''.join(result)

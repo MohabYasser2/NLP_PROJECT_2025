@@ -1,4 +1,4 @@
-"""
+﻿"""
 Logistic Regression Model - FROM SCRATCH
 Pure NumPy implementation for NLP course.
 No sklearn, no pre-built ML libraries.
@@ -18,11 +18,11 @@ try:
     import cupy as cp
     from cupyx.scipy.sparse import csr_matrix as gpu_csr_matrix
     GPU_AVAILABLE = True
-    print("✓ CuPy available - GPU acceleration enabled")
+    print("[OK] CuPy available - GPU acceleration enabled")
 except ImportError:
     cp = np
     GPU_AVAILABLE = False
-    print("✓ Running in CPU mode (NumPy)")
+    print("[OK] Running in CPU mode (NumPy)")
 
 from src.config import DIACRITIC_TO_ID, ID_TO_DIACRITIC
 
@@ -64,7 +64,7 @@ class TfidfVectorizer:
         print(f"  Selecting top {self.max_features} features...")
         most_common = df_counter.most_common(self.max_features)
         self.vocabulary = {ngram: idx for idx, (ngram, _) in enumerate(most_common)}
-        print(f"  ✓ Vocabulary built: {len(self.vocabulary)} features")
+        print(f"  âœ“ Vocabulary built: {len(self.vocabulary)} features")
         
         # Compute IDF: log((N + 1) / (df + 1)) + 1
         num_docs = len(texts)
@@ -87,7 +87,7 @@ class TfidfVectorizer:
         
         if not silent:
             print(f"Transforming {num_texts:,} texts to TF-IDF ({num_batches} batches)...")
-            print(f"Pre-allocating matrix: {num_texts} × {num_features} = {num_texts * num_features * 4 / 1e9:.2f} GB")
+            print(f"Pre-allocating matrix: {num_texts} Ã— {num_features} = {num_texts * num_features * 4 / 1e9:.2f} GB")
         
         # Pre-allocate ENTIRE matrix at once (avoids vstack memory spike)
         matrix = np.zeros((num_texts, num_features), dtype=np.float32)
@@ -111,7 +111,7 @@ class TfidfVectorizer:
                         matrix[global_idx, feat_idx] = (count / doc_length) * self.idf[feat_idx]
         
         if not silent:
-            print(f"✓ TF-IDF matrix built: {matrix.shape}, {matrix.nbytes / 1e9:.2f} GB")
+            print(f"âœ“ TF-IDF matrix built: {matrix.shape}, {matrix.nbytes / 1e9:.2f} GB")
         return matrix
     
     def fit_transform(self, texts: List[str]) -> np.ndarray:
@@ -203,11 +203,11 @@ class LogisticRegressionModel:
         
         # Move to GPU if available
         if GPU_AVAILABLE:
-            print("🚀 Moving data to GPU...")
+            print("ðŸš€ Moving data to GPU...")
             self.weights = cp.random.randn(num_features, num_classes).astype(cp.float32) * 0.01
             self.bias = cp.zeros(num_classes, dtype=cp.float32)
             y_idx_gpu = cp.array(y_idx)
-            print(f"✓ Weights on GPU: {self.weights.device}")
+            print(f"âœ“ Weights on GPU: {self.weights.device}")
         else:
             self.weights = np.random.randn(num_features, num_classes).astype(np.float32) * 0.01
             self.bias = np.zeros(num_classes, dtype=np.float32)
@@ -219,9 +219,9 @@ class LogisticRegressionModel:
         # Convert sparse to dense EFFICIENTLY
         print("Preparing data for training...")
         if GPU_AVAILABLE:
-            print(f"🚀 Transferring {X.nbytes / 1e9:.2f} GB to GPU...")
+            print(f"ðŸš€ Transferring {X.nbytes / 1e9:.2f} GB to GPU...")
             X = cp.asarray(X, dtype=cp.float32)
-            print(f"✓ Data on GPU: {X.device}")
+            print(f"âœ“ Data on GPU: {X.device}")
         else:
             X = X.astype(np.float32)
         
@@ -285,7 +285,7 @@ class LogisticRegressionModel:
             self.weights = cp.asnumpy(self.weights)
             self.bias = cp.asnumpy(self.bias)
         
-        print("✓ Training completed")
+        print("âœ“ Training completed")
         return self
     
     def _fit_streaming(self, texts: List[str], label_sequences: List[List[int]], 
@@ -301,7 +301,7 @@ class LogisticRegressionModel:
         import gc
         xp = cp if GPU_AVAILABLE else np
         
-        print(f"🔄 STREAMING TRAINING MODE (chunk_size={chunk_size})")
+        print(f"ðŸ”„ STREAMING TRAINING MODE (chunk_size={chunk_size})")
         print(f"Total sentences: {len(texts):,}")
         
         # PHASE 1: Build vocabulary from SAMPLE
@@ -313,7 +313,7 @@ class LogisticRegressionModel:
         
         self.vectorizer.fit_transform(sample_windows)  # Build vocabulary
         num_features = len(self.vectorizer.vocabulary)
-        print(f"  ✓ Vocabulary: {num_features:,} features")
+        print(f"  âœ“ Vocabulary: {num_features:,} features")
         del sample_windows
         gc.collect()
         
@@ -326,11 +326,11 @@ class LogisticRegressionModel:
         self.label_to_idx = {label: idx for idx, label in enumerate(unique_labels)}
         self.idx_to_label = {idx: label for label, idx in self.label_to_idx.items()}
         num_classes = len(self.label_to_idx)
-        print(f"  ✓ Classes: {num_classes}")
+        print(f"  âœ“ Classes: {num_classes}")
         
         # Initialize weights on GPU
         if GPU_AVAILABLE:
-            print("🚀 Initializing weights on GPU...")
+            print("ðŸš€ Initializing weights on GPU...")
             self.weights = cp.random.randn(num_features, num_classes).astype(cp.float32) * 0.01
             self.bias = cp.zeros(num_classes, dtype=cp.float32)
         else:
@@ -417,7 +417,7 @@ class LogisticRegressionModel:
             self.weights = cp.asnumpy(self.weights)
             self.bias = cp.asnumpy(self.bias)
         
-        print("✓ Streaming training completed")
+        print("âœ“ Streaming training completed")
         return self
     
     def predict(self, texts: List[str], window_size: int = 5) -> List[List[int]]:
@@ -519,9 +519,13 @@ class LogisticRegressionModel:
                 result.append(char)
             else:
                 result.append(char)
-                if predicted_labels[label_idx] != 0:
-                    diacritic = ID_TO_DIACRITIC.get(predicted_labels[label_idx], '')
-                    result.append(diacritic)
-                label_idx += 1
+                if label_idx < len(predicted_labels):
+                    label = predicted_labels[label_idx]
+                    diacritic = ID_TO_DIACRITIC.get(label, '')
+                    # Only add non-empty diacritics
+                    if diacritic:
+                        result.append(diacritic)
+                    label_idx += 1
         
         return ''.join(result)
+

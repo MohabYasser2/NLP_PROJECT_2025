@@ -45,7 +45,7 @@ else:
 
 # Data Paths
 TRAIN_FILE = DATA_DIR / 'train.txt'
-DEV_FILE = DATA_DIR / 'dev.txt'
+DEV_FILE = DATA_DIR / 'val.txt'  # Using val.txt as dev set
 TEST_FILE = DATA_DIR / 'test.txt'
 
 # Model Save Directory
