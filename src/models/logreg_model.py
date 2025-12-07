@@ -8,6 +8,7 @@ import numpy as np
 from typing import List, Dict, Tuple
 from pathlib import Path
 import pickle
+from tqdm import tqdm
 from collections import Counter
 
 from src.config import DIACRITIC_TO_ID, ID_TO_DIACRITIC
@@ -40,12 +41,8 @@ class TfidfVectorizer:
         
         # Count document frequency
         df_counter = Counter()
-        total = len(texts)
-        print_interval = max(1, total // 10)
         
-        for i, text in enumerate(texts):
-            if (i + 1) % print_interval == 0 or (i + 1) == total:
-                print(f"  Progress: {i+1}/{total} texts ({100*(i+1)/total:.1f}%)")
+        for text in tqdm(texts, desc="Building vocabulary", unit="text"):
             ngrams = set(self._extract_ngrams(text))
             for ngram in ngrams:
                 df_counter[ngram] += 1
@@ -66,32 +63,41 @@ class TfidfVectorizer:
         self.is_fitted = True
         return self
     
-    def transform(self, texts: List[str]) -> np.ndarray:
-        """Transform texts to TF-IDF matrix."""
+    def transform(self, texts: List[str], batch_size: int = 50000) -> np.ndarray:
+        """Transform texts to TF-IDF matrix with memory-efficient batching."""
         if not self.is_fitted:
             raise RuntimeError("Must call fit() before transform()")
         
-        print(f"Transforming {len(texts)} texts to TF-IDF features...")
         num_features = len(self.vocabulary)
-        matrix = np.zeros((len(texts), num_features), dtype=np.float32)
+        num_texts = len(texts)
         
-        total = len(texts)
-        print_interval = max(1, total // 10)
+        # Process in batches to avoid RAM overflow
+        batches = []
+        num_batches = (num_texts + batch_size - 1) // batch_size
         
-        for doc_idx, text in enumerate(texts):
-            if (doc_idx + 1) % print_interval == 0 or (doc_idx + 1) == total:
-                print(f"  Progress: {doc_idx+1}/{total} texts ({100*(doc_idx+1)/total:.1f}%)")
+        for batch_idx in tqdm(range(num_batches), desc="Transforming batches", unit="batch"):
+            start_idx = batch_idx * batch_size
+            end_idx = min(start_idx + batch_size, num_texts)
+            batch_texts = texts[start_idx:end_idx]
             
-            ngrams = self._extract_ngrams(text)
-            tf_counter = Counter(ngrams)
-            doc_length = len(ngrams) if ngrams else 1
+            # Create batch matrix
+            batch_matrix = np.zeros((len(batch_texts), num_features), dtype=np.float32)
             
-            for ngram, count in tf_counter.items():
-                if ngram in self.vocabulary:
-                    feat_idx = self.vocabulary[ngram]
-                    tf = count / doc_length
-                    matrix[doc_idx, feat_idx] = tf * self.idf[feat_idx]
+            for doc_idx, text in enumerate(batch_texts):
+                ngrams = self._extract_ngrams(text)
+                tf_counter = Counter(ngrams)
+                doc_length = len(ngrams) if ngrams else 1
+                
+                for ngram, count in tf_counter.items():
+                    if ngram in self.vocabulary:
+                        feat_idx = self.vocabulary[ngram]
+                        tf = count / doc_length
+                        batch_matrix[doc_idx, feat_idx] = tf * self.idf[feat_idx]
+            
+            batches.append(batch_matrix)
         
+        # Concatenate all batches
+        matrix = np.vstack(batches)
         print(f"  ✓ Transformation complete: {matrix.shape}")
         return matrix
     
@@ -180,9 +186,8 @@ class LogisticRegressionModel:
         
         # Training loop with mini-batch gradient descent
         num_samples = X.shape[0]
-        print_every = max(1, self.max_iter // 20)  # Print 20 times during training
         
-        for epoch in range(self.max_iter):
+        for epoch in tqdm(range(self.max_iter), desc="Training epochs", unit="epoch"):
             # Shuffle data
             indices = np.random.permutation(num_samples)
             X_shuffled = X[indices]
@@ -225,11 +230,10 @@ class LogisticRegressionModel:
                 self.weights -= self.learning_rate * grad_weights
                 self.bias -= self.learning_rate * grad_bias
             
-            # Print progress
-            if (epoch + 1) % print_every == 0 or (epoch + 1) == self.max_iter:
+            # Print progress every 10 epochs
+            if (epoch + 1) % 10 == 0 or (epoch + 1) == self.max_iter:
                 avg_loss = total_loss / num_batches
-                progress_pct = 100 * (epoch + 1) / self.max_iter
-                print(f"  Epoch {epoch+1}/{self.max_iter} ({progress_pct:.0f}%), Loss: {avg_loss:.4f}")
+                tqdm.write(f"  Epoch {epoch+1}/{self.max_iter}, Loss: {avg_loss:.4f}")
         
         self.is_fitted = True
         print("✓ Training completed")
