@@ -169,13 +169,13 @@ def run_logreg_training(
     dev_file: str = None,
     test_file: str = None,
     output_file: str = None,
-    window_size: int = 5,
-    learning_rate: float = 0.01,
-    max_iter: int = 500,
-    regularization: float = 0.01,
-    max_features: int = 5000,
-    ngram_range: Tuple[int, int] = (1, 3),
-    batch_size: int = 64
+    window_size: int = 7,
+    learning_rate: float = 0.05,
+    max_iter: int = 200,
+    regularization: float = 5e-4,
+    max_features: int = 15000,
+    ngram_range: Tuple[int, int] = (1, 5),
+    batch_size: int = 256
 ):
     """
     Complete training and evaluation pipeline for Kaggle notebooks.
