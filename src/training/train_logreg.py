@@ -3,6 +3,7 @@ Training Module for Logistic Regression
 Provides end-to-end training pipeline for logistic regression diacritization model.
 """
 
+import os
 import numpy as np
 from typing import List, Tuple, Dict
 from pathlib import Path
@@ -25,8 +26,13 @@ def load_or_prepare_data(data_file: Path, use_cache: bool = True) -> Tuple[List[
     Returns:
         Tuple of (texts, labels)
     """
-    # Check for cached pickle file
-    cache_file = data_file.parent / f"{data_file.stem}_processed.pkl"
+    # Use /kaggle/working for cache on Kaggle (writable), otherwise use same directory
+    if os.path.exists('/kaggle/input'):
+        cache_dir = Path('/kaggle/working')
+    else:
+        cache_dir = data_file.parent
+    
+    cache_file = cache_dir / f"{data_file.stem}_processed.pkl"
     
     if use_cache and cache_file.exists():
         print(f"Loading cached data from {cache_file}...")
