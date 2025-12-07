@@ -34,6 +34,7 @@ venv.bak/
 *.ipynb_checkpoints
 .jupyter/
 
+
 # PyCharm
 .idea/
 *.iml
@@ -64,14 +65,14 @@ dmypy.json
 # Models and Data (trained model files, not source code)
 # Keep models/ directory for source code
 # Ignore only trained model files in models/ root
-models/*.pt
-models/*.pth
-models/*.pkl
-models/*.joblib
-*.h5
-*.ckpt
-checkpoint/
-checkpoints/
+# models/*.pt
+# models/*.pth
+# models/*.pkl
+# models/*.joblib
+# *.h5
+# *.ckpt
+# checkpoint/
+# checkpoints/
 
 # Data (uncomment if you want to ignore data files)
 # data/
