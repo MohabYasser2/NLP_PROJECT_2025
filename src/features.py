@@ -13,7 +13,7 @@ from sklearn.preprocessing import StandardScaler
 from src.config import HYPERPARAMS
 
 # ============================================================
-# CharacterIndexer
+# CharacterIndexer → integer encoding & vocabulary building
 # ============================================================
 class CharacterIndexer:
     """Character to index mapping for neural models."""
@@ -112,7 +112,7 @@ class CharacterIndexer:
         self.vocab_size = len(self.char_to_idx)
 
 # ============================================================
-# TF-IDF Feature Extractor
+# TF-IDF Feature Extractor → baseline ML features
 # ============================================================
 
 class TfidfFeatureExtractor:
@@ -138,10 +138,13 @@ class TfidfFeatureExtractor:
         """Fit vectorizer on texts."""
         self.vectorizer.fit(texts)
     
-    def transform(self, texts: List[str]) -> np.ndarray:
-        """Transform texts to TF-IDF features."""
+def transform(self, texts: List[str]) -> np.ndarray:
+    """Transform texts to TF-IDF features, fallback to fit if required."""
+    try:
         return self.vectorizer.transform(texts).toarray()
-    
+    except:
+        return self.fit_transform(texts)
+
     def fit_transform(self, texts: List[str]) -> np.ndarray:
         """Fit and transform in one step."""
         return self.vectorizer.fit_transform(texts).toarray()
@@ -153,7 +156,7 @@ class TfidfFeatureExtractor:
     # TODO: Add feature name extraction
 
 # ============================================================
-# Bag-of-Characters Extractor
+# Bag-of-Characters Extractor → simple frequency model
 # ============================================================
 class BagOfCharactersExtractor:
     """Bag of characters feature extraction."""
@@ -175,10 +178,13 @@ class BagOfCharactersExtractor:
         """Fit vectorizer on texts."""
         self.vectorizer.fit(texts)
     
-    def transform(self, texts: List[str]) -> np.ndarray:
-        """Transform texts to bag of characters features."""
+def transform(self, texts: List[str]) -> np.ndarray:
+    """Transform texts to Bag-of-Characters features, fallback to fit if required."""
+    try:
         return self.vectorizer.transform(texts).toarray()
-    
+    except:
+        return self.fit_transform(texts)
+
     def fit_transform(self, texts: List[str]) -> np.ndarray:
         """Fit and transform in one step."""
         return self.vectorizer.fit_transform(texts).toarray()
@@ -272,8 +278,7 @@ class ContextualFeatureExtractor:
             features['is_first_word'] = (w_idx == 0)
             features['is_last_word'] = (w_idx == len(words) - 1)
 
-        return features
-    
+        return features    
     @staticmethod
     def text_to_features(text: str) -> List[Dict[str, any]]:
         """
@@ -380,6 +385,10 @@ class EmbeddingLoader:
 
 # ============================================================
 # Utility Functions for Feature Matrices
+# ============================================================
+
+# ============================================================
+#merge_features + normalize_features → unify ML feature spaces
 # ============================================================
 
 def merge_features(*arrays: np.ndarray) -> np.ndarray:
