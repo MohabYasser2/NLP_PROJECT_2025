@@ -124,6 +124,11 @@ def extract_labels_simple(text: str) -> Tuple[str, List[int]]:
         # Regular character: collect it
         clean_chars.append(char)
 
+        # Skip spaces - don't create labels for them (matches window creation logic)
+        if char.isspace():
+            i += 1
+            continue
+
         # Gather all following diacritics that belong to this character
         diac_seq = ''
         j = i + 1
