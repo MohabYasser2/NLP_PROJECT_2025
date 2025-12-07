@@ -10,6 +10,7 @@ from pathlib import Path
 import pickle
 from tqdm import tqdm
 from collections import Counter
+from scipy.sparse import csr_matrix, vstack as sparse_vstack
 
 from src.config import DIACRITIC_TO_ID, ID_TO_DIACRITIC
 
@@ -63,25 +64,25 @@ class TfidfVectorizer:
         self.is_fitted = True
         return self
     
-    def transform(self, texts: List[str], batch_size: int = 50000) -> np.ndarray:
-        """Transform texts to TF-IDF matrix with memory-efficient batching."""
+    def transform(self, texts: List[str], batch_size: int = 100000):
+        """Transform texts to sparse TF-IDF matrix (memory-efficient)."""
         if not self.is_fitted:
             raise RuntimeError("Must call fit() before transform()")
         
         num_features = len(self.vocabulary)
         num_texts = len(texts)
         
-        # Process in batches to avoid RAM overflow
-        batches = []
+        # Process in batches using sparse matrices
+        sparse_batches = []
         num_batches = (num_texts + batch_size - 1) // batch_size
         
-        for batch_idx in tqdm(range(num_batches), desc="Transforming batches", unit="batch"):
+        for batch_idx in tqdm(range(num_batches), desc="Transforming to sparse", unit="batch"):
             start_idx = batch_idx * batch_size
             end_idx = min(start_idx + batch_size, num_texts)
             batch_texts = texts[start_idx:end_idx]
             
-            # Create batch matrix
-            batch_matrix = np.zeros((len(batch_texts), num_features), dtype=np.float32)
+            # Build sparse matrix using COO format (efficient for construction)
+            rows, cols, data = [], [], []
             
             for doc_idx, text in enumerate(batch_texts):
                 ngrams = self._extract_ngrams(text)
@@ -92,13 +93,21 @@ class TfidfVectorizer:
                     if ngram in self.vocabulary:
                         feat_idx = self.vocabulary[ngram]
                         tf = count / doc_length
-                        batch_matrix[doc_idx, feat_idx] = tf * self.idf[feat_idx]
+                        tfidf_value = tf * self.idf[feat_idx]
+                        rows.append(doc_idx)
+                        cols.append(feat_idx)
+                        data.append(tfidf_value)
             
-            batches.append(batch_matrix)
+            # Convert to CSR format (efficient for arithmetic operations)
+            from scipy.sparse import coo_matrix
+            batch_sparse = coo_matrix((data, (rows, cols)), 
+                                     shape=(len(batch_texts), num_features),
+                                     dtype=np.float32).tocsr()
+            sparse_batches.append(batch_sparse)
         
-        # Concatenate all batches
-        matrix = np.vstack(batches)
-        print(f"  ✓ Transformation complete: {matrix.shape}")
+        # Concatenate sparse matrices (memory-efficient)
+        matrix = sparse_vstack(sparse_batches, format='csr')
+        print(f"  ✓ Sparse transformation complete: {matrix.shape}, Density: {matrix.nnz / (matrix.shape[0] * matrix.shape[1]) * 100:.2f}%")
         return matrix
     
     def fit_transform(self, texts: List[str]) -> np.ndarray:
@@ -202,6 +211,10 @@ class LogisticRegressionModel:
                 X_batch = X_shuffled[start_idx:end_idx]
                 y_batch = y_shuffled[start_idx:end_idx]
                 
+                # Convert sparse batch to dense for computation (small batch is OK)
+                if hasattr(X_batch, 'toarray'):
+                    X_batch = X_batch.toarray()
+                
                 # Forward pass
                 logits = X_batch @ self.weights + self.bias
                 probs = self._softmax(logits)
@@ -246,6 +259,10 @@ class LogisticRegressionModel:
         
         windows = self._prepare_windows(texts, window_size)
         X = self.vectorizer.transform(windows)
+        
+        # Convert sparse to dense for prediction
+        if hasattr(X, 'toarray'):
+            X = X.toarray()
         
         # Forward pass
         logits = X @ self.weights + self.bias
