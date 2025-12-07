@@ -193,11 +193,18 @@ class LogisticRegressionModel:
         print(f"Training on {X.shape[0]} samples, {num_features} features, {num_classes} classes...")
         print(f"  Batch size: {self.batch_size}, Iterations: {self.max_iter}, LR: {self.learning_rate}")
         
+        # Convert sparse matrix to dense ONCE before training (if small enough)
+        # For 8.3M x 15k sparse (~3% density), this is ~15GB dense
+        print("Converting sparse matrix to dense for faster training...")
+        if hasattr(X, 'toarray'):
+            X = X.toarray()
+        print(f"  Matrix in memory: {X.shape}, {X.nbytes / 1e9:.2f} GB")
+        
         # Training loop with mini-batch gradient descent
         num_samples = X.shape[0]
         
         for epoch in tqdm(range(self.max_iter), desc="Training epochs", unit="epoch"):
-            # Shuffle data
+            # Shuffle data (now much faster on dense array)
             indices = np.random.permutation(num_samples)
             X_shuffled = X[indices]
             y_shuffled = y_idx[indices]
@@ -211,11 +218,7 @@ class LogisticRegressionModel:
                 X_batch = X_shuffled[start_idx:end_idx]
                 y_batch = y_shuffled[start_idx:end_idx]
                 
-                # Convert sparse batch to dense for computation (small batch is OK)
-                if hasattr(X_batch, 'toarray'):
-                    X_batch = X_batch.toarray()
-                
-                # Forward pass
+                # Forward pass (X already dense, no conversion needed)
                 logits = X_batch @ self.weights + self.bias
                 probs = self._softmax(logits)
                 
