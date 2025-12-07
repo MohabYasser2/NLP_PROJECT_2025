@@ -340,67 +340,69 @@ class LogisticRegressionModel:
         # PHASE 3: Streaming training
         print(f"\n[Phase 3/3] Streaming training ({self.max_iter} epochs)...")
         print(f"  Batch size: {self.batch_size}, LR: {self.learning_rate}")
-        print(f"  Pre-transforming all chunks to avoid re-computation...")
+        print(f"  Processing {len(texts):,} sentences in {(len(texts) + chunk_size - 1) // chunk_size} chunks")
         
-        # Pre-transform ALL data once (avoids re-transform every epoch)
-        all_windows = self._prepare_windows(texts, window_size)
-        print(f"  Transforming {len(all_windows):,} windows...")
-        X_all_dense = self.vectorizer.transform(all_windows, silent=False)
-        y_all = np.array([self.label_to_idx[label] for seq in label_sequences for label in seq])
-        
-        # Move to GPU
-        if GPU_AVAILABLE:
-            print(f"  Moving {X_all_dense.nbytes / 1e9:.2f} GB to GPU...")
-            X_all = cp.asarray(X_all_dense)
-            y_all_gpu = cp.array(y_all)
-            del X_all_dense  # Free CPU memory
-        else:
-            X_all = X_all_dense
-            y_all_gpu = y_all
-        
-        del all_windows
-        gc.collect()
-        print(f"  ✓ Data ready on {'GPU' if GPU_AVAILABLE else 'CPU'}")
-        
-        # Training loop
-        num_samples = X_all.shape[0]
         for epoch in tqdm(range(self.max_iter), desc="Training", unit="epoch"):
             total_loss = 0
             num_batches = 0
             
-            # Shuffle all data
-            indices = xp.random.permutation(num_samples)
-            X_shuffled = X_all[indices]
-            y_shuffled = y_all_gpu[indices]
-            
-            # Mini-batch training
-            for start_idx in range(0, num_samples, self.batch_size):
-                end_idx = min(start_idx + self.batch_size, num_samples)
-                X_batch = X_shuffled[start_idx:end_idx]
-                y_batch = y_shuffled[start_idx:end_idx]
+            # Process data in chunks (transform once per epoch per chunk)
+            for chunk_start in range(0, len(texts), chunk_size):
+                chunk_end = min(chunk_start + chunk_size, len(texts))
+                chunk_texts = texts[chunk_start:chunk_end]
+                chunk_labels = label_sequences[chunk_start:chunk_end]
                 
-                # Forward pass
-                logits = X_batch @ self.weights + self.bias
-                probs = self._softmax(logits)
+                # Transform chunk (once per epoch)
+                chunk_windows = self._prepare_windows(chunk_texts, window_size)
+                X_chunk_dense = self.vectorizer.transform(chunk_windows, silent=True)
+                y_chunk = np.array([self.label_to_idx[label] for seq in chunk_labels for label in seq])
                 
-                # Loss
-                batch_size_actual = X_batch.shape[0]
-                log_probs = xp.log(probs[xp.arange(batch_size_actual), y_batch] + 1e-10)
-                loss = -xp.mean(log_probs) + 0.5 * self.regularization * xp.sum(self.weights ** 2)
-                total_loss += float(loss) if GPU_AVAILABLE else loss
-                num_batches += 1
+                # Move chunk to GPU
+                if GPU_AVAILABLE:
+                    X_chunk = cp.asarray(X_chunk_dense)
+                    y_chunk_gpu = cp.array(y_chunk)
+                else:
+                    X_chunk = X_chunk_dense
+                    y_chunk_gpu = y_chunk
                 
-                # Backward pass
-                grad_logits = probs.copy()
-                grad_logits[xp.arange(batch_size_actual), y_batch] -= 1
-                grad_logits /= batch_size_actual
+                # Shuffle chunk
+                num_samples = X_chunk.shape[0]
+                indices = xp.random.permutation(num_samples)
+                X_chunk = X_chunk[indices]
+                y_chunk_gpu = y_chunk_gpu[indices]
                 
-                grad_weights = X_batch.T @ grad_logits + self.regularization * self.weights
-                grad_bias = xp.sum(grad_logits, axis=0)
+                # Mini-batch training on this chunk
+                for start_idx in range(0, num_samples, self.batch_size):
+                    end_idx = min(start_idx + self.batch_size, num_samples)
+                    X_batch = X_chunk[start_idx:end_idx]
+                    y_batch = y_chunk_gpu[start_idx:end_idx]
+                    
+                    # Forward pass
+                    logits = X_batch @ self.weights + self.bias
+                    probs = self._softmax(logits)
+                    
+                    # Loss
+                    batch_size_actual = X_batch.shape[0]
+                    log_probs = xp.log(probs[xp.arange(batch_size_actual), y_batch] + 1e-10)
+                    loss = -xp.mean(log_probs) + 0.5 * self.regularization * xp.sum(self.weights ** 2)
+                    total_loss += float(loss) if GPU_AVAILABLE else loss
+                    num_batches += 1
+                    
+                    # Backward pass
+                    grad_logits = probs.copy()
+                    grad_logits[xp.arange(batch_size_actual), y_batch] -= 1
+                    grad_logits /= batch_size_actual
+                    
+                    grad_weights = X_batch.T @ grad_logits + self.regularization * self.weights
+                    grad_bias = xp.sum(grad_logits, axis=0)
+                    
+                    # Update
+                    self.weights -= self.learning_rate * grad_weights
+                    self.bias -= self.learning_rate * grad_bias
                 
-                # Update
-                self.weights -= self.learning_rate * grad_weights
-                self.bias -= self.learning_rate * grad_bias
+                # Clean up chunk
+                del X_chunk, y_chunk_gpu, X_chunk_dense, chunk_windows
+                gc.collect()
             
             # Log progress
             if (epoch + 1) % 10 == 0 or (epoch + 1) == self.max_iter:
