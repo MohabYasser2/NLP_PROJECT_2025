@@ -312,7 +312,7 @@ class LogisticRegressionModel:
         print(f"  Sampling {len(sample_windows):,} windows from {vocab_sample_size:,} sentences")
         
         self.vectorizer.fit_transform(sample_windows)  # Build vocabulary
-        num_features = len(self.vectorizer.vocabulary_)
+        num_features = len(self.vectorizer.vocabulary)
         print(f"  ✓ Vocabulary: {num_features:,} features")
         del sample_windows
         gc.collect()
