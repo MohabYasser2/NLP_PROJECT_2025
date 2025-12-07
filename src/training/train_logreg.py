@@ -169,13 +169,13 @@ def run_logreg_training(
     dev_file: str = DEV_FILE,
     test_file: str = None,
     output_file: str = None,
-    window_size: int = 7,
-    learning_rate: float = 0.05,
-    max_iter: int = 150,  # Reduced for memory efficiency
-    regularization: float = 5e-4,
-    max_features: int = 5000,  # REDUCED: 5k instead of 10k for <30GB RAM
-    ngram_range: Tuple[int, int] = (1, 3),  # REDUCED: 1-3 instead of 1-4 for memory
-    batch_size: int = 512  # Increased for GPU efficiency
+    window_size: int = 5,  # Reduced for memory
+    learning_rate: float = 0.1,  # Higher for faster convergence
+    max_iter: int = 100,  # Reduced iterations
+    regularization: float = 1e-3,
+    max_features: int = 3000,  # DRASTICALLY REDUCED: 3k for <30GB RAM
+    ngram_range: Tuple[int, int] = (1, 2),  # MINIMAL: Only bigrams for memory
+    batch_size: int = 1024  # Larger batches for GPU efficiency
 ):
     """
     Complete training and evaluation pipeline for Kaggle notebooks.
