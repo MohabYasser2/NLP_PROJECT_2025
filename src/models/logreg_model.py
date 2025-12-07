@@ -76,27 +76,31 @@ class TfidfVectorizer:
         self.is_fitted = True
         return self
     
-    def transform(self, texts: List[str], batch_size: int = 100000):
-        """Transform texts to sparse TF-IDF matrix (memory-efficient)."""
+    def transform(self, texts: List[str], batch_size: int = 50000):
+        """Transform texts to TF-IDF matrix (optimized for GPU)."""
         if not self.is_fitted:
             raise RuntimeError("Must call fit() before transform()")
         
         num_features = len(self.vocabulary)
         num_texts = len(texts)
-        
-        # Process in batches using sparse matrices
-        sparse_batches = []
         num_batches = (num_texts + batch_size - 1) // batch_size
         
-        for batch_idx in tqdm(range(num_batches), desc="Transforming to sparse", unit="batch"):
+        print(f"Transforming {num_texts:,} texts to TF-IDF ({num_batches} batches)...")
+        
+        # Build dense matrix in batches (faster than sparse for this use case)
+        batches = []
+        
+        for batch_idx in tqdm(range(num_batches), desc="Building TF-IDF", unit="batch"):
             start_idx = batch_idx * batch_size
             end_idx = min(start_idx + batch_size, num_texts)
-            batch_texts = texts[start_idx:end_idx]
+            batch_size_actual = end_idx - start_idx
             
-            # Build sparse matrix using COO format (efficient for construction)
-            rows, cols, data = [], [], []
+            # Pre-allocate dense batch matrix
+            batch_matrix = np.zeros((batch_size_actual, num_features), dtype=np.float32)
             
-            for doc_idx, text in enumerate(batch_texts):
+            # Fill matrix (vectorized where possible)
+            for local_idx, global_idx in enumerate(range(start_idx, end_idx)):
+                text = texts[global_idx]
                 ngrams = self._extract_ngrams(text)
                 tf_counter = Counter(ngrams)
                 doc_length = len(ngrams) if ngrams else 1
@@ -104,22 +108,13 @@ class TfidfVectorizer:
                 for ngram, count in tf_counter.items():
                     if ngram in self.vocabulary:
                         feat_idx = self.vocabulary[ngram]
-                        tf = count / doc_length
-                        tfidf_value = tf * self.idf[feat_idx]
-                        rows.append(doc_idx)
-                        cols.append(feat_idx)
-                        data.append(tfidf_value)
+                        batch_matrix[local_idx, feat_idx] = (count / doc_length) * self.idf[feat_idx]
             
-            # Convert to CSR format (efficient for arithmetic operations)
-            from scipy.sparse import coo_matrix
-            batch_sparse = coo_matrix((data, (rows, cols)), 
-                                     shape=(len(batch_texts), num_features),
-                                     dtype=np.float32).tocsr()
-            sparse_batches.append(batch_sparse)
+            batches.append(batch_matrix)
         
-        # Concatenate sparse matrices (memory-efficient)
-        matrix = sparse_vstack(sparse_batches, format='csr')
-        print(f"  ✓ Sparse transformation complete: {matrix.shape}, Density: {matrix.nnz / (matrix.shape[0] * matrix.shape[1]) * 100:.2f}%")
+        # Concatenate batches
+        matrix = np.vstack(batches)
+        print(f"✓ TF-IDF matrix built: {matrix.shape}, {matrix.nbytes / 1e9:.2f} GB")
         return matrix
     
     def fit_transform(self, texts: List[str]) -> np.ndarray:
@@ -215,15 +210,14 @@ class LogisticRegressionModel:
         print(f"Training on {X.shape[0]} samples, {num_features} features, {num_classes} classes...")
         print(f"  Batch size: {self.batch_size}, Iterations: {self.max_iter}, LR: {self.learning_rate}")
         
-        # Convert sparse to dense and move to GPU
+        # Convert sparse to dense EFFICIENTLY
         print("Preparing data for training...")
-        if hasattr(X, 'toarray'):
-            X = X.toarray()
-        
         if GPU_AVAILABLE:
-            print("🚀 Moving training data to GPU (this may take a minute)...")
+            print(f"🚀 Transferring {X.nbytes / 1e9:.2f} GB to GPU...")
             X = cp.asarray(X, dtype=cp.float32)
-            print(f"✓ Data on GPU: {X.device}, Memory: {X.nbytes / 1e9:.2f} GB")
+            print(f"✓ Data on GPU: {X.device}")
+        else:
+            X = X.astype(np.float32)
         
         # Training loop with mini-batch gradient descent
         num_samples = X.shape[0]
@@ -296,11 +290,8 @@ class LogisticRegressionModel:
         windows = self._prepare_windows(texts, window_size)
         X = self.vectorizer.transform(windows)
         
-        # Convert sparse to dense for prediction (always on CPU for inference)
-        if hasattr(X, 'toarray'):
-            X = X.toarray()
-        
-        # Forward pass
+        # Weights are already on CPU after training
+        # Forward pass (on CPU for inference)
         logits = X @ self.weights + self.bias
         probs = self._softmax(logits)
         y_pred_idx = np.argmax(probs, axis=1)
