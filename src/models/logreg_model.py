@@ -36,16 +36,25 @@ class TfidfVectorizer:
     
     def fit(self, texts: List[str]):
         """Build vocabulary and compute IDF values."""
+        print(f"Building vocabulary from {len(texts)} texts...")
+        
         # Count document frequency
         df_counter = Counter()
-        for text in texts:
+        total = len(texts)
+        print_interval = max(1, total // 10)
+        
+        for i, text in enumerate(texts):
+            if (i + 1) % print_interval == 0 or (i + 1) == total:
+                print(f"  Progress: {i+1}/{total} texts ({100*(i+1)/total:.1f}%)")
             ngrams = set(self._extract_ngrams(text))
             for ngram in ngrams:
                 df_counter[ngram] += 1
         
         # Select top features by frequency
+        print(f"  Selecting top {self.max_features} features...")
         most_common = df_counter.most_common(self.max_features)
         self.vocabulary = {ngram: idx for idx, (ngram, _) in enumerate(most_common)}
+        print(f"  ✓ Vocabulary built: {len(self.vocabulary)} features")
         
         # Compute IDF: log((N + 1) / (df + 1)) + 1
         num_docs = len(texts)
@@ -62,10 +71,17 @@ class TfidfVectorizer:
         if not self.is_fitted:
             raise RuntimeError("Must call fit() before transform()")
         
+        print(f"Transforming {len(texts)} texts to TF-IDF features...")
         num_features = len(self.vocabulary)
         matrix = np.zeros((len(texts), num_features), dtype=np.float32)
         
+        total = len(texts)
+        print_interval = max(1, total // 10)
+        
         for doc_idx, text in enumerate(texts):
+            if (doc_idx + 1) % print_interval == 0 or (doc_idx + 1) == total:
+                print(f"  Progress: {doc_idx+1}/{total} texts ({100*(doc_idx+1)/total:.1f}%)")
+            
             ngrams = self._extract_ngrams(text)
             tf_counter = Counter(ngrams)
             doc_length = len(ngrams) if ngrams else 1
@@ -76,6 +92,7 @@ class TfidfVectorizer:
                     tf = count / doc_length
                     matrix[doc_idx, feat_idx] = tf * self.idf[feat_idx]
         
+        print(f"  ✓ Transformation complete: {matrix.shape}")
         return matrix
     
     def fit_transform(self, texts: List[str]) -> np.ndarray:
@@ -159,9 +176,12 @@ class LogisticRegressionModel:
         self.bias = np.zeros(num_classes)
         
         print(f"Training on {X.shape[0]} samples, {num_features} features, {num_classes} classes...")
+        print(f"  Batch size: {self.batch_size}, Iterations: {self.max_iter}, LR: {self.learning_rate}")
         
         # Training loop with mini-batch gradient descent
         num_samples = X.shape[0]
+        print_every = max(1, self.max_iter // 20)  # Print 20 times during training
+        
         for epoch in range(self.max_iter):
             # Shuffle data
             indices = np.random.permutation(num_samples)
@@ -205,9 +225,11 @@ class LogisticRegressionModel:
                 self.weights -= self.learning_rate * grad_weights
                 self.bias -= self.learning_rate * grad_bias
             
-            if (epoch + 1) % 100 == 0:
+            # Print progress
+            if (epoch + 1) % print_every == 0 or (epoch + 1) == self.max_iter:
                 avg_loss = total_loss / num_batches
-                print(f"  Epoch {epoch+1}/{self.max_iter}, Loss: {avg_loss:.4f}")
+                progress_pct = 100 * (epoch + 1) / self.max_iter
+                print(f"  Epoch {epoch+1}/{self.max_iter} ({progress_pct:.0f}%), Loss: {avg_loss:.4f}")
         
         self.is_fitted = True
         print("✓ Training completed")
