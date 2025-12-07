@@ -358,12 +358,14 @@ class LogisticRegressionModel:
                 # Convert labels
                 y_chunk = np.array([self.label_to_idx[label] for seq in chunk_labels for label in seq])
                 
-                # Move to GPU in small batches
+                # Convert sparse to dense first, then move to GPU
+                X_chunk_dense = X_chunk_sparse.toarray().astype(np.float32)
+                
                 if GPU_AVAILABLE:
-                    X_chunk = cp.sparse.csr_matrix(X_chunk_sparse).toarray().astype(cp.float32)
+                    X_chunk = cp.asarray(X_chunk_dense)
                     y_chunk_gpu = cp.array(y_chunk)
                 else:
-                    X_chunk = X_chunk_sparse.toarray().astype(np.float32)
+                    X_chunk = X_chunk_dense
                     y_chunk_gpu = y_chunk
                 
                 # Mini-batch training on this chunk
