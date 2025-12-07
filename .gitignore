@@ -61,12 +61,13 @@ dmypy.json
 # pytype
 .pytype/
 
-# Models and Data
-models/
-*.pt
-*.pth
-*.pkl
-*.joblib
+# Models and Data (trained model files, not source code)
+# Keep models/ directory for source code
+# Ignore only trained model files in models/ root
+models/*.pt
+models/*.pth
+models/*.pkl
+models/*.joblib
 *.h5
 *.ckpt
 checkpoint/
