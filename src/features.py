@@ -18,10 +18,24 @@ from src.config import HYPERPARAMS
 class CharacterIndexer:
     """Character to index mapping for neural models."""
 
-    def __init__(self):
+    def __init__(self, use_arabic_letters: bool = True):
+        """
+        Initialize CharacterIndexer.
+        
+        Args:
+            use_arabic_letters: If True, pre-populate with ARABIC_LETTERS from config
+        """
         self.char_to_idx: Dict[str, int] = {'<PAD>': 0, '<UNK>': 1}
         self.idx_to_char: Dict[int, str] = {0: '<PAD>', 1: '<UNK>'}
         self.vocab_size: int = 2
+        
+        # Pre-populate with Arabic letters if requested
+        if use_arabic_letters:
+            from src.config import ARABIC_LETTERS
+            if ARABIC_LETTERS:
+                self.fit(ARABIC_LETTERS)
+            # Always include space character
+            self.fit([' '])
 
     # ---------- Fitting / Vocabulary ----------
 
@@ -258,7 +272,6 @@ class ContextualFeatureExtractor:
             features['is_first_word'] = (w_idx == 0)
             features['is_last_word'] = (w_idx == len(words) - 1)
 
-        return features
         return features
     
     @staticmethod
