@@ -353,14 +353,12 @@ class LogisticRegressionModel:
                 
                 # Transform chunk
                 chunk_windows = self._prepare_windows(chunk_texts, window_size)
-                X_chunk_sparse = self.vectorizer.transform(chunk_windows, silent=True)
+                X_chunk_dense = self.vectorizer.transform(chunk_windows, silent=True)
                 
                 # Convert labels
                 y_chunk = np.array([self.label_to_idx[label] for seq in chunk_labels for label in seq])
                 
-                # Convert sparse to dense first, then move to GPU
-                X_chunk_dense = X_chunk_sparse.toarray().astype(np.float32)
-                
+                # Move to GPU if available
                 if GPU_AVAILABLE:
                     X_chunk = cp.asarray(X_chunk_dense)
                     y_chunk_gpu = cp.array(y_chunk)
