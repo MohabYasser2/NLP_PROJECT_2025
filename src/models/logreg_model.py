@@ -76,7 +76,7 @@ class TfidfVectorizer:
         self.is_fitted = True
         return self
     
-    def transform(self, texts: List[str], batch_size: int = 50000):
+    def transform(self, texts: List[str], batch_size: int = 50000, silent: bool = False):
         """Transform texts to TF-IDF matrix (memory-optimized for GPU)."""
         if not self.is_fitted:
             raise RuntimeError("Must call fit() before transform()")
@@ -85,14 +85,16 @@ class TfidfVectorizer:
         num_texts = len(texts)
         num_batches = (num_texts + batch_size - 1) // batch_size
         
-        print(f"Transforming {num_texts:,} texts to TF-IDF ({num_batches} batches)...")
-        print(f"Pre-allocating matrix: {num_texts} × {num_features} = {num_texts * num_features * 4 / 1e9:.2f} GB")
+        if not silent:
+            print(f"Transforming {num_texts:,} texts to TF-IDF ({num_batches} batches)...")
+            print(f"Pre-allocating matrix: {num_texts} × {num_features} = {num_texts * num_features * 4 / 1e9:.2f} GB")
         
         # Pre-allocate ENTIRE matrix at once (avoids vstack memory spike)
         matrix = np.zeros((num_texts, num_features), dtype=np.float32)
         
         # Fill matrix in batches
-        for batch_idx in tqdm(range(num_batches), desc="Building TF-IDF", unit="batch"):
+        iterator = tqdm(range(num_batches), desc="Building TF-IDF", unit="batch", disable=silent)
+        for batch_idx in iterator:
             start_idx = batch_idx * batch_size
             end_idx = min(start_idx + batch_size, num_texts)
             
@@ -108,7 +110,8 @@ class TfidfVectorizer:
                         feat_idx = self.vocabulary[ngram]
                         matrix[global_idx, feat_idx] = (count / doc_length) * self.idf[feat_idx]
         
-        print(f"✓ TF-IDF matrix built: {matrix.shape}, {matrix.nbytes / 1e9:.2f} GB")
+        if not silent:
+            print(f"✓ TF-IDF matrix built: {matrix.shape}, {matrix.nbytes / 1e9:.2f} GB")
         return matrix
     
     def fit_transform(self, texts: List[str]) -> np.ndarray:
