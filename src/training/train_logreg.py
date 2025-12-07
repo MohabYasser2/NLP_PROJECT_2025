@@ -168,7 +168,14 @@ def run_logreg_training(
     train_file: str = None,
     dev_file: str = None,
     test_file: str = None,
-    output_file: str = None
+    output_file: str = None,
+    window_size: int = 5,
+    learning_rate: float = 0.01,
+    max_iter: int = 500,
+    regularization: float = 0.01,
+    max_features: int = 5000,
+    ngram_range: Tuple[int, int] = (1, 3),
+    batch_size: int = 64
 ):
     """
     Complete training and evaluation pipeline for Kaggle notebooks.
@@ -178,18 +185,25 @@ def run_logreg_training(
         dev_file: Path to dev data
         test_file: Path to test data (optional)
         output_file: Path to save predictions (optional)
+        window_size: Context window size
+        learning_rate: Learning rate for gradient descent
+        max_iter: Maximum number of training iterations
+        regularization: L2 regularization strength
+        max_features: Maximum number of TF-IDF features
+        ngram_range: N-gram range for feature extraction
+        batch_size: Batch size for mini-batch training
     """
     # Train model
     model = train_logreg(
         train_file=train_file,
         dev_file=dev_file,
-        window_size=5,
-        learning_rate=0.01,
-        max_iter=500,
-        regularization=0.01,
-        max_features=5000,
-        ngram_range=(1, 3),
-        batch_size=64
+        window_size=window_size,
+        learning_rate=learning_rate,
+        max_iter=max_iter,
+        regularization=regularization,
+        max_features=max_features,
+        ngram_range=ngram_range,
+        batch_size=batch_size
     )
     
     # If test file provided, generate predictions
