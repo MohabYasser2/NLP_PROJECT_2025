@@ -162,15 +162,24 @@ class LogisticRegressionModel:
         return windows
     
     def fit(self, texts: List[str], label_sequences: List[List[int]], 
-            window_size: int = 5):
+            window_size: int = 5, streaming: bool = True, chunk_size: int = 500):
         """
-        Train logistic regression using gradient descent.
+        Train logistic regression using gradient descent with streaming support.
         
         Args:
             texts: Input texts without diacritics
             label_sequences: Diacritic labels for each non-space character
             window_size: Context window size
+            streaming: If True, use streaming training (recommended for large datasets)
+            chunk_size: Number of sentences to process per chunk (only used if streaming=True)
         """
+        if streaming and len(texts) > chunk_size:
+            return self._fit_streaming(texts, label_sequences, window_size, chunk_size)
+        else:
+            return self._fit_standard(texts, label_sequences, window_size)
+    
+    def _fit_standard(self, texts: List[str], label_sequences: List[List[int]], window_size: int = 5):
+        """Standard non-streaming fit (loads all data to GPU at once)."""
         print("Creating character windows...")
         windows = self._prepare_windows(texts, window_size)
         
@@ -277,6 +286,138 @@ class LogisticRegressionModel:
             self.bias = cp.asnumpy(self.bias)
         
         print("✓ Training completed")
+        return self
+    
+    def _fit_streaming(self, texts: List[str], label_sequences: List[List[int]], 
+                      window_size: int = 5, chunk_size: int = 500):
+        """
+        Streaming fit that processes data in chunks to avoid memory overflow.
+        
+        This method:
+        1. Fits vocabulary on a SAMPLE of data (to build feature space)
+        2. Trains on STREAMING CHUNKS (never loads all data at once)
+        3. Uses GPU mini-batches for efficient training
+        """
+        import gc
+        xp = cp if GPU_AVAILABLE else np
+        
+        print(f"🔄 STREAMING TRAINING MODE (chunk_size={chunk_size})")
+        print(f"Total sentences: {len(texts):,}")
+        
+        # PHASE 1: Build vocabulary from SAMPLE
+        print("\n[Phase 1/3] Building vocabulary from sample...")
+        vocab_sample_size = min(10000, len(texts) // 10)  # 10k contexts or 10% of data
+        sample_texts = texts[:vocab_sample_size]
+        sample_windows = self._prepare_windows(sample_texts, window_size)
+        print(f"  Sampling {len(sample_windows):,} windows from {vocab_sample_size:,} sentences")
+        
+        self.vectorizer.fit_transform(sample_windows)  # Build vocabulary
+        num_features = len(self.vectorizer.vocabulary_)
+        print(f"  ✓ Vocabulary: {num_features:,} features")
+        del sample_windows
+        gc.collect()
+        
+        # PHASE 2: Build label mapping from ALL labels
+        print("\n[Phase 2/3] Building label mapping...")
+        all_labels = set()
+        for seq in label_sequences:
+            all_labels.update(seq)
+        unique_labels = sorted(all_labels)
+        self.label_to_idx = {label: idx for idx, label in enumerate(unique_labels)}
+        self.idx_to_label = {idx: label for label, idx in self.label_to_idx.items()}
+        num_classes = len(self.label_to_idx)
+        print(f"  ✓ Classes: {num_classes}")
+        
+        # Initialize weights on GPU
+        if GPU_AVAILABLE:
+            print("🚀 Initializing weights on GPU...")
+            self.weights = cp.random.randn(num_features, num_classes).astype(cp.float32) * 0.01
+            self.bias = cp.zeros(num_classes, dtype=cp.float32)
+        else:
+            self.weights = np.random.randn(num_features, num_classes).astype(np.float32) * 0.01
+            self.bias = np.zeros(num_classes, dtype=np.float32)
+        
+        # PHASE 3: Streaming training
+        print(f"\n[Phase 3/3] Streaming training ({self.max_iter} epochs)...")
+        print(f"  Batch size: {self.batch_size}, LR: {self.learning_rate}")
+        
+        for epoch in tqdm(range(self.max_iter), desc="Training", unit="epoch"):
+            total_loss = 0
+            num_batches = 0
+            
+            # Process data in chunks
+            for chunk_start in range(0, len(texts), chunk_size):
+                chunk_end = min(chunk_start + chunk_size, len(texts))
+                chunk_texts = texts[chunk_start:chunk_end]
+                chunk_labels = label_sequences[chunk_start:chunk_end]
+                
+                # Transform chunk
+                chunk_windows = self._prepare_windows(chunk_texts, window_size)
+                X_chunk_sparse = self.vectorizer.transform(chunk_windows, silent=True)
+                
+                # Convert labels
+                y_chunk = np.array([self.label_to_idx[label] for seq in chunk_labels for label in seq])
+                
+                # Move to GPU in small batches
+                if GPU_AVAILABLE:
+                    X_chunk = cp.sparse.csr_matrix(X_chunk_sparse).toarray().astype(cp.float32)
+                    y_chunk_gpu = cp.array(y_chunk)
+                else:
+                    X_chunk = X_chunk_sparse.toarray().astype(np.float32)
+                    y_chunk_gpu = y_chunk
+                
+                # Mini-batch training on this chunk
+                num_samples = X_chunk.shape[0]
+                indices = xp.random.permutation(num_samples)
+                X_chunk = X_chunk[indices]
+                y_chunk_gpu = y_chunk_gpu[indices]
+                
+                for start_idx in range(0, num_samples, self.batch_size):
+                    end_idx = min(start_idx + self.batch_size, num_samples)
+                    X_batch = X_chunk[start_idx:end_idx]
+                    y_batch = y_chunk_gpu[start_idx:end_idx]
+                    
+                    # Forward pass
+                    logits = X_batch @ self.weights + self.bias
+                    probs = self._softmax(logits)
+                    
+                    # Loss
+                    batch_size_actual = X_batch.shape[0]
+                    log_probs = xp.log(probs[xp.arange(batch_size_actual), y_batch] + 1e-10)
+                    loss = -xp.mean(log_probs) + 0.5 * self.regularization * xp.sum(self.weights ** 2)
+                    total_loss += float(loss) if GPU_AVAILABLE else loss
+                    num_batches += 1
+                    
+                    # Backward pass
+                    grad_logits = probs.copy()
+                    grad_logits[xp.arange(batch_size_actual), y_batch] -= 1
+                    grad_logits /= batch_size_actual
+                    
+                    grad_weights = X_batch.T @ grad_logits + self.regularization * self.weights
+                    grad_bias = xp.sum(grad_logits, axis=0)
+                    
+                    # Update
+                    self.weights -= self.learning_rate * grad_weights
+                    self.bias -= self.learning_rate * grad_bias
+                
+                # Clean up chunk
+                del X_chunk, y_chunk_gpu, chunk_windows
+                gc.collect()
+            
+            # Log progress
+            if (epoch + 1) % 10 == 0 or (epoch + 1) == self.max_iter:
+                avg_loss = total_loss / num_batches
+                tqdm.write(f"  Epoch {epoch+1}/{self.max_iter}, Loss: {avg_loss:.4f}")
+        
+        self.is_fitted = True
+        
+        # Move weights back to CPU
+        if GPU_AVAILABLE:
+            print("\nMoving weights back to CPU...")
+            self.weights = cp.asnumpy(self.weights)
+            self.bias = cp.asnumpy(self.bias)
+        
+        print("✓ Streaming training completed")
         return self
     
     def predict(self, texts: List[str], window_size: int = 5) -> List[List[int]]:
