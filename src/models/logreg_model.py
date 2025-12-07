@@ -77,7 +77,7 @@ class TfidfVectorizer:
         return self
     
     def transform(self, texts: List[str], batch_size: int = 50000):
-        """Transform texts to TF-IDF matrix (optimized for GPU)."""
+        """Transform texts to TF-IDF matrix (memory-optimized for GPU)."""
         if not self.is_fitted:
             raise RuntimeError("Must call fit() before transform()")
         
@@ -86,20 +86,18 @@ class TfidfVectorizer:
         num_batches = (num_texts + batch_size - 1) // batch_size
         
         print(f"Transforming {num_texts:,} texts to TF-IDF ({num_batches} batches)...")
+        print(f"Pre-allocating matrix: {num_texts} × {num_features} = {num_texts * num_features * 4 / 1e9:.2f} GB")
         
-        # Build dense matrix in batches (faster than sparse for this use case)
-        batches = []
+        # Pre-allocate ENTIRE matrix at once (avoids vstack memory spike)
+        matrix = np.zeros((num_texts, num_features), dtype=np.float32)
         
+        # Fill matrix in batches
         for batch_idx in tqdm(range(num_batches), desc="Building TF-IDF", unit="batch"):
             start_idx = batch_idx * batch_size
             end_idx = min(start_idx + batch_size, num_texts)
-            batch_size_actual = end_idx - start_idx
             
-            # Pre-allocate dense batch matrix
-            batch_matrix = np.zeros((batch_size_actual, num_features), dtype=np.float32)
-            
-            # Fill matrix (vectorized where possible)
-            for local_idx, global_idx in enumerate(range(start_idx, end_idx)):
+            # Fill matrix directly (no intermediate batch array)
+            for global_idx in range(start_idx, end_idx):
                 text = texts[global_idx]
                 ngrams = self._extract_ngrams(text)
                 tf_counter = Counter(ngrams)
@@ -108,12 +106,8 @@ class TfidfVectorizer:
                 for ngram, count in tf_counter.items():
                     if ngram in self.vocabulary:
                         feat_idx = self.vocabulary[ngram]
-                        batch_matrix[local_idx, feat_idx] = (count / doc_length) * self.idf[feat_idx]
-            
-            batches.append(batch_matrix)
+                        matrix[global_idx, feat_idx] = (count / doc_length) * self.idf[feat_idx]
         
-        # Concatenate batches
-        matrix = np.vstack(batches)
         print(f"✓ TF-IDF matrix built: {matrix.shape}, {matrix.nbytes / 1e9:.2f} GB")
         return matrix
     
