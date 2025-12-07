@@ -55,44 +55,6 @@ MODEL_DIR.mkdir(exist_ok=True)
 # Output Directory
 OUTPUT_DIR = BASE_DIR / 'outputs'
 OUTPUT_DIR.mkdir(exist_ok=True)
-"""
-Configuration Module
-Auto-detects Kaggle vs Local environment and sets paths accordingly.
-"""
-
-import os
-from pathlib import Path
-
-
-def is_kaggle_environment():
-    """Detect if running on Kaggle."""
-    return os.path.exists('/kaggle/input')
-
-
-# Environment Detection
-IS_KAGGLE = is_kaggle_environment()
-
-# Base Paths
-if IS_KAGGLE:
-    BASE_DIR = Path('/kaggle/working')
-    DATA_DIR = Path('/kaggle/input/arabic-diacritization-dataset')  
-    # TODO: Update dataset name to match your Kaggle dataset slug
-else:
-    BASE_DIR = Path(__file__).parent.parent
-    DATA_DIR = BASE_DIR / 'data'
-
-# Data Paths
-TRAIN_FILE = DATA_DIR / 'train.txt'
-DEV_FILE = DATA_DIR / 'dev.txt'
-TEST_FILE = DATA_DIR / 'test.txt'
-
-# Model Save Directory
-MODEL_DIR = BASE_DIR / 'models'
-MODEL_DIR.mkdir(exist_ok=True)
-
-# Output Directory
-OUTPUT_DIR = BASE_DIR / 'outputs'
-OUTPUT_DIR.mkdir(exist_ok=True)
 
 # Hyperparameters
 HYPERPARAMS = {
